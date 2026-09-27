@@ -44,6 +44,6 @@ export async function isAuthenticated(req?: NextRequest): Promise<boolean> {
 }
 
 export function checkPin(inputPin: string): boolean {
-  const systemPin = (process.env.APP_PIN || "1234").trim();
+  const systemPin = (process.env.APP_PIN || process.env.PIN_SECRET || "1234").trim();
   return inputPin.trim() === systemPin;
 }
