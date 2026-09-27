@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Check, UserPlus, IndianRupee, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { formatINR } from "@/lib/utils";
 
 interface Friend {
   _id: string;
   name: string;
   phone?: string;
+  netBalance?: number;
 }
 
 interface QuickDueModalProps {
@@ -61,6 +63,13 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
       console.error("Failed to load friends", e);
     }
   };
+
+  const selectedFriend = friends.find((f) => f._id === friendId);
+  const currentNet = selectedFriend?.netBalance ?? 0;
+  const numAmount = parseFloat(amount) || 0;
+  // If friend paid me (TO_GIVE), it reduces what they owe (or increases what I owe): currentNet - numAmount
+  // If I paid (TO_TAKE), it increases what they owe: currentNet + numAmount
+  const newEstimatedNet = type === "TO_GIVE" ? currentNet - numAmount : currentNet + numAmount;
 
   if (!isOpen) return null;
 
@@ -165,31 +174,31 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
             </div>
           )}
 
-          {/* Type Toggle: TO_TAKE (They owe me) vs TO_GIVE (I owe them) */}
+          {/* Type Toggle: TO_GIVE (Friend paid / deposited) vs TO_TAKE (I paid / split) */}
           <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-900 rounded-xl border border-zinc-800">
-            <button
-              type="button"
-              onClick={() => setType("TO_TAKE")}
-              className={`py-2.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                type === "TO_TAKE"
-                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
-              <span>To Take (They owe me)</span>
-            </button>
             <button
               type="button"
               onClick={() => setType("TO_GIVE")}
               className={`py-2.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 type === "TO_GIVE"
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                  : "text-zinc-400 hover:text-zinc-200"
+              }`}
+            >
+              <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Friend Paid Me (+ Deposit)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setType("TO_TAKE")}
+              className={`py-2.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                type === "TO_TAKE"
                   ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.2)]"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
               <ArrowUpRight className="w-3.5 h-3.5 text-rose-400" />
-              <span>To Give (I owe them)</span>
+              <span>I Paid / Spent (- Lent)</span>
             </button>
           </div>
 
@@ -210,12 +219,32 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
                 onChange={(e) => setAmount(e.target.value)}
                 autoFocus
                 className={`w-full pl-10 pr-4 py-3 bg-zinc-900/80 border rounded-xl text-2xl font-extrabold focus:outline-none focus:ring-2 transition-all ${
-                  type === "TO_TAKE"
+                  type === "TO_GIVE"
                     ? "border-emerald-500/30 focus:border-emerald-500 focus:ring-emerald-500/20 text-emerald-400"
                     : "border-rose-500/30 focus:border-rose-500 focus:ring-rose-500/20 text-rose-400"
                 }`}
               />
             </div>
+
+            {/* Live Net Balance Adjustment Preview */}
+            {selectedFriend && numAmount > 0 && (
+              <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs">
+                <div className="flex items-center justify-between text-zinc-400 text-[11px]">
+                  <span>Current Balance with {selectedFriend.name}:</span>
+                  <span className={currentNet >= 0 ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
+                    {currentNet >= 0 ? `+${formatINR(currentNet)} (owes you)` : `-${formatINR(Math.abs(currentNet))} (you owe)`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between font-bold mt-1.5 pt-1.5 border-t border-zinc-800/60">
+                  <span className="text-zinc-200">Adjusted Net Balance:</span>
+                  <span className={newEstimatedNet >= 0 ? "text-emerald-400 font-mono text-sm" : "text-rose-400 font-mono text-sm"}>
+                    {newEstimatedNet > 0 && `+${formatINR(newEstimatedNet)} (${selectedFriend.name} will owe you)`}
+                    {newEstimatedNet < 0 && `-${formatINR(Math.abs(newEstimatedNet))} (You will owe ${selectedFriend.name})`}
+                    {newEstimatedNet === 0 && `₹0 (All Squared Off!)`}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Friend Selection or Create Friend */}
@@ -329,18 +358,18 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
               type="submit"
               disabled={loading}
               className={`w-full py-3 rounded-xl font-bold text-sm text-zinc-950 transition-all flex items-center justify-center gap-2 active:scale-98 ${
-                type === "TO_TAKE"
+                type === "TO_GIVE"
                   ? "bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                   : "bg-gradient-to-r from-rose-500 to-rose-400 hover:from-rose-400 hover:to-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.3)]"
               }`}
             >
               {loading ? (
-                <span>Recording...</span>
+                <span>Recording entry...</span>
               ) : (
                 <>
                   <Check className="w-4 h-4 stroke-[3]" />
                   <span>
-                    Add to Khaata ({type === "TO_TAKE" ? "To Take" : "To Give"})
+                    Record {type === "TO_GIVE" ? "Payment Received (+)" : "Expense / Split (-)"}
                   </span>
                 </>
               )}

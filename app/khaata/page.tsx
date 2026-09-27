@@ -81,17 +81,17 @@ export default function KhaataPage() {
     fetchData();
   }, [fetchData]);
 
-  // Aggregate totals
-  const totalToTake = friends.reduce((sum, f) => sum + f.toTake, 0);
-  const totalToGive = friends.reduce((sum, f) => sum + f.toGive, 0);
+  // Aggregate totals from true net balances (one unified net balance per friend)
+  const totalToTake = friends.reduce((sum, f) => sum + (f.netBalance > 0 ? f.netBalance : 0), 0);
+  const totalToGive = friends.reduce((sum, f) => sum + (f.netBalance < 0 ? Math.abs(f.netBalance) : 0), 0);
   const netPosition = totalToTake - totalToGive;
 
-  // Filter friends into Two Columns:
+  // Filter friends into Two Columns by their single net balance:
   // "To Give" friends: Net I owe them (netBalance < 0)
   // "To Take" friends: Net they owe me (netBalance > 0)
   const toGiveFriends = friends.filter((f) => f.netBalance < 0);
   const toTakeFriends = friends.filter((f) => f.netBalance > 0);
-  const settledFriends = friends.filter((f) => f.netBalance === 0 && f.unsettledCount === 0);
+  const settledFriends = friends.filter((f) => f.netBalance === 0);
 
   const handleDeleteFriend = async (id: string, name: string) => {
     if (!confirm(`Delete ${name} and all their records from Khaata?`)) return;
@@ -106,8 +106,11 @@ export default function KhaataPage() {
     }
   };
 
-  const openAddDueForFriend = (friendId: string) => {
+  const [dueTypeToOpen, setDueTypeToOpen] = useState<"TO_TAKE" | "TO_GIVE">("TO_TAKE");
+
+  const openAddDueForFriend = (friendId: string, initialType: "TO_TAKE" | "TO_GIVE" = "TO_TAKE") => {
     setPreselectedFriendId(friendId);
+    setDueTypeToOpen(initialType);
     setQuickDueOpen(true);
   };
 
@@ -119,11 +122,11 @@ export default function KhaataPage() {
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-zinc-100 flex items-center gap-2">
             <span>Khaata</span>
             <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-              Friend Ledger
+              Running Ledger
             </span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Track split bills, group expenses, and settle balances seamlessly
+            Running passbook with friends — payments, splits, and deposits auto-adjust into one net balance
           </p>
         </div>
 
@@ -131,12 +134,13 @@ export default function KhaataPage() {
           <button
             onClick={() => {
               setPreselectedFriendId(undefined);
+              setDueTypeToOpen("TO_TAKE");
               setQuickDueOpen(true);
             }}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Add Due / Split</span>
+            <span>Add Entry / Deposit</span>
           </button>
         </div>
       </div>
@@ -155,7 +159,7 @@ export default function KhaataPage() {
           <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-3 font-mono">
             +{formatINR(totalToTake)}
           </div>
-          <p className="text-xs text-zinc-500 mt-1">Friends owe you</p>
+          <p className="text-xs text-zinc-500 mt-1">Net money friends owe you</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-zinc-900/60 border border-rose-500/20 backdrop-blur-md">
@@ -170,7 +174,7 @@ export default function KhaataPage() {
           <div className="text-2xl sm:text-3xl font-black text-rose-400 mt-3 font-mono">
             -{formatINR(totalToGive)}
           </div>
-          <p className="text-xs text-zinc-500 mt-1">You owe friends</p>
+          <p className="text-xs text-zinc-500 mt-1">Net money you owe friends</p>
         </div>
 
         <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800/80 backdrop-blur-md">
@@ -190,7 +194,7 @@ export default function KhaataPage() {
             {netPosition >= 0 ? "+" : ""}
             {formatINR(netPosition)}
           </div>
-          <p className="text-xs text-zinc-500 mt-1">Overall balance</p>
+          <p className="text-xs text-zinc-500 mt-1">Single overall balance</p>
         </div>
       </div>
 
@@ -249,7 +253,7 @@ export default function KhaataPage() {
                     key={f._id}
                     className="p-5 rounded-2xl bg-zinc-900/60 border border-emerald-500/20 hover:border-emerald-500/40 transition-all shadow-lg"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-base font-bold text-zinc-100">{f.name}</h3>
@@ -260,24 +264,38 @@ export default function KhaataPage() {
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-emerald-400 font-semibold mt-1">
-                          Owes you: +{formatINR(f.netBalance)}
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <span className="text-xs text-zinc-400">Net Balance:</span>
+                          <span className="text-lg font-black font-mono text-emerald-400">
+                            +{formatINR(f.netBalance)}
+                          </span>
+                          <span className="text-[11px] text-emerald-500/80 font-medium">
+                            ({f.name} owes you)
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Direct Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-1.5 self-start">
                         <button
-                          onClick={() => setSettleFriend(f)}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.3)] active:scale-95"
+                          onClick={() => openAddDueForFriend(f._id, "TO_GIVE")}
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all active:scale-95"
+                          title="Record payment or money received from friend"
                         >
-                          Settle Up
+                          + Received
                         </button>
                         <button
-                          onClick={() => openAddDueForFriend(f._id)}
-                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-                          title="Add entry for this friend"
+                          onClick={() => openAddDueForFriend(f._id, "TO_TAKE")}
+                          className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold transition-all active:scale-95"
+                          title="Record split or money you paid for friend"
                         >
-                          <Plus className="w-4 h-4" />
+                          - Spent / Lent
+                        </button>
+                        <button
+                          onClick={() => setSettleFriend(f)}
+                          className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-all active:scale-95 border border-zinc-700"
+                        >
+                          Settle Up
                         </button>
                       </div>
                     </div>
@@ -285,10 +303,10 @@ export default function KhaataPage() {
                     {/* Breakdown Toggle */}
                     <button
                       onClick={() => setExpandedFriendId(isExpanded ? null : f._id)}
-                      className="mt-3 w-full pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400 hover:text-zinc-200"
+                      className="mt-3 w-full pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400 hover:text-zinc-200"
                     >
                       <span>
-                        {f.unsettledCount} unsettled entr{f.unsettledCount > 1 ? "ies" : "y"}
+                        Running passbook ({friendDues.length} adjustment entries)
                       </span>
                       {isExpanded ? (
                         <ChevronUp className="w-3.5 h-3.5" />
@@ -303,22 +321,25 @@ export default function KhaataPage() {
                         {friendDues.map((d) => (
                           <div
                             key={d._id}
-                            className="p-2 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs"
+                            className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs"
                           >
                             <div>
                               <div className="text-zinc-200 font-medium">
-                                {d.notes || (d.type === "TO_TAKE" ? "Lent money" : "Borrowed money")}
+                                {d.notes || (d.type === "TO_TAKE" ? "I paid / he took" : "He gave me / deposited")}
                               </div>
-                              <div className="text-[10px] text-zinc-500">
-                                {formatDate(d.date)} • {d.paymentMode}
+                              <div className="text-[10px] text-zinc-500 mt-0.5">
+                                {formatDate(d.date)} • {d.paymentMode} •{" "}
+                                <span className={d.type === "TO_TAKE" ? "text-rose-400" : "text-emerald-400"}>
+                                  {d.type === "TO_TAKE" ? "Owed to me" : "Received from him"}
+                                </span>
                               </div>
                             </div>
                             <span
-                              className={`font-mono font-bold ${
-                                d.type === "TO_TAKE" ? "text-emerald-400" : "text-rose-400"
+                              className={`font-mono font-bold text-sm ${
+                                d.type === "TO_TAKE" ? "text-rose-400" : "text-emerald-400"
                               }`}
                             >
-                              {d.type === "TO_TAKE" ? "+" : "-"}
+                              {d.type === "TO_TAKE" ? "-" : "+"}
                               {formatINR(d.amount)}
                             </span>
                           </div>
@@ -359,7 +380,7 @@ export default function KhaataPage() {
                     key={f._id}
                     className="p-5 rounded-2xl bg-zinc-900/60 border border-rose-500/20 hover:border-rose-500/40 transition-all shadow-lg"
                   >
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-base font-bold text-zinc-100">{f.name}</h3>
@@ -370,24 +391,38 @@ export default function KhaataPage() {
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-rose-400 font-semibold mt-1">
-                          You owe: -{formatINR(Math.abs(f.netBalance))}
+                        <div className="mt-1 flex items-baseline gap-2">
+                          <span className="text-xs text-zinc-400">Net Balance:</span>
+                          <span className="text-lg font-black font-mono text-rose-400">
+                            -{formatINR(Math.abs(f.netBalance))}
+                          </span>
+                          <span className="text-[11px] text-rose-500/80 font-medium">
+                            (You owe {f.name})
+                          </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      {/* Direct Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-1.5 self-start">
                         <button
-                          onClick={() => setSettleFriend(f)}
-                          className="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-zinc-950 text-xs font-bold transition-all shadow-[0_0_12px_rgba(244,63,94,0.3)] active:scale-95"
+                          onClick={() => openAddDueForFriend(f._id, "TO_GIVE")}
+                          className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-semibold transition-all active:scale-95"
+                          title="Record payment or money received from friend"
                         >
-                          Settle Up
+                          + Received
                         </button>
                         <button
-                          onClick={() => openAddDueForFriend(f._id)}
-                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-                          title="Add entry for this friend"
+                          onClick={() => openAddDueForFriend(f._id, "TO_TAKE")}
+                          className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold transition-all active:scale-95"
+                          title="Record split or money you paid for friend"
                         >
-                          <Plus className="w-4 h-4" />
+                          - Spent / Lent
+                        </button>
+                        <button
+                          onClick={() => setSettleFriend(f)}
+                          className="px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition-all active:scale-95 border border-zinc-700"
+                        >
+                          Settle Up
                         </button>
                       </div>
                     </div>
@@ -395,10 +430,10 @@ export default function KhaataPage() {
                     {/* Breakdown Toggle */}
                     <button
                       onClick={() => setExpandedFriendId(isExpanded ? null : f._id)}
-                      className="mt-3 w-full pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400 hover:text-zinc-200"
+                      className="mt-3 w-full pt-2.5 border-t border-zinc-800/80 flex items-center justify-between text-[11px] text-zinc-400 hover:text-zinc-200"
                     >
                       <span>
-                        {f.unsettledCount} unsettled entr{f.unsettledCount > 1 ? "ies" : "y"}
+                        Running passbook ({friendDues.length} adjustment entries)
                       </span>
                       {isExpanded ? (
                         <ChevronUp className="w-3.5 h-3.5" />
@@ -409,26 +444,29 @@ export default function KhaataPage() {
 
                     {/* Detailed List */}
                     {isExpanded && (
-                      <div className="mt-2 space-y-1.5 pt-2 border-t border-zinc-855">
+                      <div className="mt-2 space-y-1.5 pt-2 border-t border-zinc-850">
                         {friendDues.map((d) => (
                           <div
                             key={d._id}
-                            className="p-2 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs"
+                            className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs"
                           >
                             <div>
                               <div className="text-zinc-200 font-medium">
-                                {d.notes || (d.type === "TO_TAKE" ? "Lent money" : "Borrowed money")}
+                                {d.notes || (d.type === "TO_TAKE" ? "I paid / he took" : "He gave me / deposited")}
                               </div>
-                              <div className="text-[10px] text-zinc-500">
-                                {formatDate(d.date)} • {d.paymentMode}
+                              <div className="text-[10px] text-zinc-500 mt-0.5">
+                                {formatDate(d.date)} • {d.paymentMode} •{" "}
+                                <span className={d.type === "TO_TAKE" ? "text-rose-400" : "text-emerald-400"}>
+                                  {d.type === "TO_TAKE" ? "Owed to me" : "Received from him"}
+                                </span>
                               </div>
                             </div>
                             <span
-                              className={`font-mono font-bold ${
-                                d.type === "TO_TAKE" ? "text-emerald-400" : "text-rose-400"
+                              className={`font-mono font-bold text-sm ${
+                                d.type === "TO_TAKE" ? "text-rose-400" : "text-emerald-400"
                               }`}
                             >
-                              {d.type === "TO_TAKE" ? "+" : "-"}
+                              {d.type === "TO_TAKE" ? "-" : "+"}
                               {formatINR(d.amount)}
                             </span>
                           </div>
@@ -487,6 +525,7 @@ export default function KhaataPage() {
       <QuickDueModal
         isOpen={quickDueOpen}
         preselectedFriendId={preselectedFriendId}
+        initialType={dueTypeToOpen}
         onClose={() => {
           setQuickDueOpen(false);
           setPreselectedFriendId(undefined);

@@ -72,23 +72,32 @@ export async function GET(req: NextRequest) {
     });
     const cashBalance = allTimeIncome - allTimeExpense;
 
-    // 3. Friend Dues (Net Owed to Me: TO_TAKE, Net I Owe: TO_GIVE)
+    // 3. Friend Dues - Net per friend (so reciprocal dues offset into one net balance)
     const duesAggregation = await FriendDue.aggregate([
       { $match: { isSettled: false } },
       {
         $group: {
-          _id: "$type",
+          _id: { friendId: "$friendId", type: "$type" },
           total: { $sum: "$amount" },
         },
       },
     ]);
 
-    let netOwedToMe = 0; // TO_TAKE
-    let netIOwe = 0;     // TO_GIVE
-
+    const friendBalances: Record<string, { toGive: number; toTake: number }> = {};
     duesAggregation.forEach((item) => {
-      if (item._id === "TO_TAKE") netOwedToMe = item.total;
-      if (item._id === "TO_GIVE") netIOwe = item.total;
+      const fId = item._id.friendId.toString();
+      if (!friendBalances[fId]) friendBalances[fId] = { toGive: 0, toTake: 0 };
+      if (item._id.type === "TO_GIVE") friendBalances[fId].toGive += item.total;
+      if (item._id.type === "TO_TAKE") friendBalances[fId].toTake += item.total;
+    });
+
+    let netOwedToMe = 0; // Sum of positive net balances (friends who owe me)
+    let netIOwe = 0;     // Sum of negative net balances (friends I owe)
+
+    Object.values(friendBalances).forEach((bal) => {
+      const net = bal.toTake - bal.toGive;
+      if (net > 0) netOwedToMe += net;
+      if (net < 0) netIOwe += Math.abs(net);
     });
 
     // 4. Spend by Category this month (for Pie/Donut Chart)
