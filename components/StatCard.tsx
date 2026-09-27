@@ -59,26 +59,29 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl bg-zinc-900/60 backdrop-blur-md p-5 border transition-all duration-300 ${variantStyles.border} ${variantStyles.glow}`}
+      className={`relative overflow-hidden rounded-2xl glass-panel p-5 transition-all duration-300 ${variantStyles.border} ${variantStyles.glow} group hover:-translate-y-0.5`}
     >
+      {/* Top hairline glass reflection */}
+      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase">
           {title}
         </span>
-        <div className={`p-2.5 rounded-xl ${variantStyles.iconBg}`}>
+        <div className={`p-2.5 rounded-xl ${variantStyles.iconBg} transition-transform group-hover:scale-105`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
 
       <div className="mt-4">
-        <div className={`text-2xl sm:text-3xl font-bold tracking-tight ${variantStyles.amountColor}`}>
+        <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${variantStyles.amountColor}`}>
           {formatINR(amount)}
         </div>
         {(subtitle || badge) && (
-          <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
+          <div className="mt-2.5 flex items-center justify-between text-xs text-zinc-400">
             {subtitle && <span>{subtitle}</span>}
             {badge && (
-              <span className={`px-2 py-0.5 rounded-full border text-[10px] font-medium ${variantStyles.badgeColor}`}>
+              <span className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${variantStyles.badgeColor}`}>
                 {badge}
               </span>
             )}

@@ -3,27 +3,62 @@
 @tailwind utilities;
 
 :root {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #060608;
+  --foreground: #f4f4f5;
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background-color: var(--background);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-/* Custom modern dark scrollbar */
+/* Luxury high-tech dot matrix grid texture */
+.dot-grid-pattern {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Glassmorphism Card Style */
+.glass-panel {
+  background: rgba(18, 18, 23, 0.55);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+              0 10px 30px -10px rgba(0, 0, 0, 0.6);
+}
+
+.glass-panel-glow-emerald:hover {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: inset 0 1px 0 0 rgba(16, 185, 129, 0.2),
+              0 0 30px -5px rgba(16, 185, 129, 0.15);
+}
+
+.glass-panel-glow-rose:hover {
+  border-color: rgba(244, 63, 94, 0.4);
+  box-shadow: inset 0 1px 0 0 rgba(244, 63, 94, 0.2),
+              0 0 30px -5px rgba(244, 63, 94, 0.15);
+}
+
+.glass-panel-glow-sky:hover {
+  border-color: rgba(14, 165, 233, 0.4);
+  box-shadow: inset 0 1px 0 0 rgba(14, 165, 233, 0.2),
+              0 0 30px -5px rgba(14, 165, 233, 0.15);
+}
+
+/* Modern dark scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #060608;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -37,7 +72,7 @@ body {
 
 /* PWA mobile safe area padding */
 .safe-area-bottom {
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 .safe-area-top {

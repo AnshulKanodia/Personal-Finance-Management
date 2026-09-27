@@ -16,9 +16,10 @@ import {
 
 interface NavbarProps {
   onOpenQuickAdd?: () => void;
+  onLock?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd }) => {
+export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -29,9 +30,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd }) => {
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
+      if (onLock) onLock();
       await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/login");
-      router.refresh();
     } catch (e) {
       console.error("Logout error", e);
     } finally {
@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd }) => {
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b border-white/[0.06] bg-[#060608]/75 backdrop-blur-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
