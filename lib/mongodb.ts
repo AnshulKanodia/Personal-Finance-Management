@@ -1,4 +1,11 @@
 import mongoose from "mongoose";
+import dns from "dns";
+
+try {
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+} catch {
+  // Ignore in environments where setServers is restricted
+}
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
