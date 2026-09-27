@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, IndianRupee, Delete, ArrowRight } from "lucide-react";
+import { Starfield } from "@/components/Starfield";
 
 function LoginForm() {
   const [pin, setPin] = useState<string>("");
@@ -191,7 +192,7 @@ function LoginForm() {
 
         <div className="mt-6 text-center">
           <span className="text-[11px] text-zinc-600">
-            Default PIN: <code className="text-zinc-500 bg-zinc-900 px-1 py-0.5 rounded">1234</code> (configurable in .env)
+            Private Vault Protected
           </span>
         </div>
       </div>
@@ -201,10 +202,13 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-zinc-950">
-      <Suspense fallback={<div className="text-xs text-zinc-500">Loading secure vault...</div>}>
-        <LoginForm />
-      </Suspense>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#050507] relative overflow-hidden select-none">
+      <Starfield />
+      <div className="relative z-10 w-full flex justify-center">
+        <Suspense fallback={<div className="text-xs text-zinc-500">Loading secure vault...</div>}>
+          <LoginForm />
+        </Suspense>
+      </div>
     </div>
   );
 }

@@ -8,6 +8,8 @@ import { QuickDueModal } from "./QuickDueModal";
 import { VaultLockScreen } from "./VaultLockScreen";
 import { usePathname, useRouter } from "next/navigation";
 
+import { Starfield } from "./Starfield";
+
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // In-memory unlock state: Always resets to false on browser reload / refresh!
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -35,13 +37,11 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   return (
     <div className="min-h-screen bg-[#060608] text-zinc-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200 relative overflow-hidden">
-      {/* 1. Ambient Blurred Glow Mesh (Neon Orbs) */}
-      <div className="fixed top-[-100px] left-[-50px] w-[500px] h-[500px] rounded-full bg-emerald-500/[0.08] blur-[150px] pointer-events-none" />
-      <div className="fixed top-[-80px] right-[-60px] w-[450px] h-[450px] rounded-full bg-sky-500/[0.07] blur-[140px] pointer-events-none" />
-      <div className="fixed bottom-[-150px] left-[25%] w-[650px] h-[400px] rounded-full bg-violet-600/[0.05] blur-[160px] pointer-events-none" />
+      {/* 1. Moving starry night sky */}
+      <Starfield />
 
       {/* 2. High-Tech Dot Matrix Pattern Overlay */}
-      <div className="fixed inset-0 dot-grid-pattern opacity-30 pointer-events-none" />
+      <div className="fixed inset-0 dot-grid-pattern opacity-20 pointer-events-none" />
 
       {/* 3. Automatic Lock Screen: If not unlocked, show PIN lock overlay on refresh/load */}
       {!isUnlocked && !isAuthPage ? (

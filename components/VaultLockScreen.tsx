@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { Lock, Unlock, IndianRupee, Delete, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
+import { Starfield } from "./Starfield";
+
 interface VaultLockScreenProps {
   onUnlock: () => void;
 }
@@ -83,13 +85,9 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
   }, [pin, loading, isSuccess]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#060608] select-none">
-      {/* Ambient background light orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-sky-500/10 rounded-full blur-[140px] pointer-events-none" />
-
-      {/* Dot matrix grid texture */}
-      <div className="absolute inset-0 dot-grid-pattern opacity-40 pointer-events-none" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050507] select-none">
+      {/* Moving stars in cosmic night sky */}
+      <Starfield />
 
       <div className="relative w-full max-w-sm flex flex-col items-center z-10 animate-in fade-in zoom-in-95 duration-300">
         {/* Brand Header */}
@@ -195,8 +193,9 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
           </div>
 
           <div className="mt-5 text-center">
-            <span className="text-[11px] text-zinc-600">
-              Default PIN: <code className="text-zinc-400 bg-zinc-900/90 px-1.5 py-0.5 rounded border border-zinc-800 font-mono">1234</code>
+            <span className="text-[11px] text-zinc-600 flex items-center justify-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+              <span>Private Vault Encrypted</span>
             </span>
           </div>
         </div>

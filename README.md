@@ -40,17 +40,23 @@ Designed for deployment on **Vercel** with a **MongoDB Atlas** backend.
   - Standalone fullscreen experience with mobile-optimized bottom navigation.
 - **Serverless Connection Pooling**:
   - MongoDB connection pooling via `lib/mongodb.js` caching connections on `global.mongoose` across Vercel Lambda invocations.
+- **Polyglot Financial Engineering Suite**:
+  - 🐍 **Python (`engine/finance_engine.py`)**: Quantitative analytics suite featuring Monte Carlo cash runway modeling, Z-score/IQR transaction anomaly detection, Shannon spending entropy, and Indian Tax (FY 2024-25) calculators.
+  - 🔷 **Go (`cli/main.go`)**: Cryptographic SHA-256 tamper-evident ledger auditor and concurrent spend aggregators.
+  - 🐘 **SQL (`database/schema_and_analytics.sql`)**: Double-entry bookkeeping schema with ACID debit/credit integrity triggers, recursive CTE hierarchy trees, and moving average window functions.
+  - ⚡ **Shell & DevOps (`scripts/vault_ops.sh`, `Dockerfile`)**: Automated database snapshots, health check benchmarks, and multi-stage container deployment.
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Tech Stack & Polyglot Architecture
 
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS with OLED Dark Mode
-- **Database**: MongoDB with Mongoose ORM
-- **Visuals**: Recharts & Lucide React Icons
-- **PWA**: `@ducanh2912/next-pwa`
-- **Security**: `jose` (JWT) + HTTP-only cookies
+- **Full-Stack Web**: Next.js 14 (App Router), React 18, Tailwind CSS (OLED Dark Mode)
+- **Quantitative Analytics**: Python 3 (NumPy/Pandas patterns, Monte Carlo, Statistical Outliers)
+- **High-Performance CLI**: Go (Golang) for cryptographic verification & concurrency
+- **Relational Ledger**: SQL (PostgreSQL / Supabase compatible Double-Entry Bookkeeping)
+- **NoSQL & Cache**: MongoDB Atlas with Mongoose ORM & SRV failover
+- **DevOps & Infrastructure**: Docker, Docker Compose, Bash SRE automation
+- **Mobile / PWA**: `@ducanh2912/next-pwa` with custom Service Worker
 
 ---
 

@@ -31,19 +31,113 @@ export async function GET(req: NextRequest) {
       endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     }
 
-    // 1. Total Spend and Income this month
-    const monthlyTotals = await Transaction.aggregate([
-      {
-        $match: {
-          date: { $gte: startOfMonth, $lte: endOfMonth },
+    // Run all 6 aggregations concurrently in parallel for maximum speed (sub-second load)
+    const [
+      monthlyTotals,
+      allTimeTotals,
+      duesAggregation,
+      categorySpendAggregation,
+      paymentModeAggregation,
+      recentTransactions,
+    ] = await Promise.all([
+      // 1. Total Spend and Income this month
+      Transaction.aggregate([
+        {
+          $match: {
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+          },
         },
-      },
-      {
-        $group: {
-          _id: "$type",
-          total: { $sum: "$amount" },
+        {
+          $group: {
+            _id: "$type",
+            total: { $sum: "$amount" },
+          },
         },
-      },
+      ]),
+
+      // 2. All-time Cash / Net Balance
+      Transaction.aggregate([
+        {
+          $group: {
+            _id: "$type",
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      // 3. Friend Dues - Net per friend
+      FriendDue.aggregate([
+        { $match: { isSettled: false } },
+        {
+          $group: {
+            _id: { friendId: "$friendId", type: "$type" },
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      // 4. Spend by Category this month
+      Transaction.aggregate([
+        {
+          $match: {
+            type: "EXPENSE",
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+          },
+        },
+        {
+          $group: {
+            _id: "$category",
+            total: { $sum: "$amount" },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "_id",
+            foreignField: "_id",
+            as: "categoryDoc",
+          },
+        },
+        {
+          $unwind: {
+            path: "$categoryDoc",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            name: { $ifNull: ["$categoryDoc.name", "Uncategorized"] },
+            color: { $ifNull: ["$categoryDoc.color", "#71717a"] },
+            icon: { $ifNull: ["$categoryDoc.icon", "Tag"] },
+            total: 1,
+            count: 1,
+          },
+        },
+        { $sort: { total: -1 } },
+      ]),
+
+      // 5. Payment Mode Breakdown this month
+      Transaction.aggregate([
+        {
+          $match: {
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+          },
+        },
+        {
+          $group: {
+            _id: { mode: "$paymentMode", type: "$type" },
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      // 6. Recent 8 transactions
+      Transaction.find()
+        .populate("category", "name color icon")
+        .sort({ date: -1, createdAt: -1 })
+        .limit(8)
+        .lean(),
     ]);
 
     let totalSpendThisMonth = 0;
@@ -54,16 +148,6 @@ export async function GET(req: NextRequest) {
       if (item._id === "INCOME") totalIncomeThisMonth = item.total;
     });
 
-    // 2. All-time Cash / Net Balance (All time Income - All time Expense)
-    const allTimeTotals = await Transaction.aggregate([
-      {
-        $group: {
-          _id: "$type",
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
-
     let allTimeIncome = 0;
     let allTimeExpense = 0;
     allTimeTotals.forEach((item) => {
@@ -71,17 +155,6 @@ export async function GET(req: NextRequest) {
       if (item._id === "EXPENSE") allTimeExpense = item.total;
     });
     const cashBalance = allTimeIncome - allTimeExpense;
-
-    // 3. Friend Dues - Net per friend (so reciprocal dues offset into one net balance)
-    const duesAggregation = await FriendDue.aggregate([
-      { $match: { isSettled: false } },
-      {
-        $group: {
-          _id: { friendId: "$friendId", type: "$type" },
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
 
     const friendBalances: Record<string, { toGive: number; toTake: number }> = {};
     duesAggregation.forEach((item) => {
@@ -99,69 +172,6 @@ export async function GET(req: NextRequest) {
       if (net > 0) netOwedToMe += net;
       if (net < 0) netIOwe += Math.abs(net);
     });
-
-    // 4. Spend by Category this month (for Pie/Donut Chart)
-    const categorySpendAggregation = await Transaction.aggregate([
-      {
-        $match: {
-          type: "EXPENSE",
-          date: { $gte: startOfMonth, $lte: endOfMonth },
-        },
-      },
-      {
-        $group: {
-          _id: "$category",
-          total: { $sum: "$amount" },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $lookup: {
-          from: "categories",
-          localField: "_id",
-          foreignField: "_id",
-          as: "categoryDoc",
-        },
-      },
-      {
-        $unwind: {
-          path: "$categoryDoc",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $project: {
-          name: { $ifNull: ["$categoryDoc.name", "Uncategorized"] },
-          color: { $ifNull: ["$categoryDoc.color", "#71717a"] },
-          icon: { $ifNull: ["$categoryDoc.icon", "Tag"] },
-          total: 1,
-          count: 1,
-        },
-      },
-      { $sort: { total: -1 } },
-    ]);
-
-    // 5. Payment Mode Breakdown this month
-    const paymentModeAggregation = await Transaction.aggregate([
-      {
-        $match: {
-          date: { $gte: startOfMonth, $lte: endOfMonth },
-        },
-      },
-      {
-        $group: {
-          _id: { mode: "$paymentMode", type: "$type" },
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
-
-    // 6. Recent 8 transactions
-    const recentTransactions = await Transaction.find()
-      .populate("category", "name color icon")
-      .sort({ date: -1, createdAt: -1 })
-      .limit(8)
-      .lean();
 
     return NextResponse.json({
       success: true,
