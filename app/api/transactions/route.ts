@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
     const month = searchParams.get("month"); // Format: YYYY-MM
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const limitParam = searchParams.get("limit");
+    const isUnlimited = limitParam === "0" || limitParam === "all";
+    const limit = isUnlimited ? 0 : parseInt(limitParam || "100", 10);
     const page = parseInt(searchParams.get("page") || "1", 10);
 
     const filter: Record<string, any> = {};
@@ -59,15 +61,17 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const skip = (page - 1) * limit;
+    const query = Transaction.find(filter)
+      .populate("category", "name color icon")
+      .sort({ date: -1, createdAt: -1 });
+
+    if (limit > 0) {
+      const skip = (page - 1) * limit;
+      query.skip(skip).limit(limit);
+    }
 
     const [transactions, totalCount] = await Promise.all([
-      Transaction.find(filter)
-        .populate("category", "name color icon")
-        .sort({ date: -1, createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      query.lean(),
       Transaction.countDocuments(filter),
     ]);
 

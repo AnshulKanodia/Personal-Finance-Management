@@ -19,9 +19,11 @@ import {
   LogOut,
   IndianRupee,
   Sparkles,
+  Download,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { clearCache } from "@/lib/clientCache";
+import { DownloadStatementModal } from "@/components/DownloadStatementModal";
 
 interface Friend {
   _id: string;
@@ -51,6 +53,7 @@ export default function ProfilePage() {
   const [newFriendPhone, setNewFriendPhone] = useState<string>("");
   const [submittingFriend, setSubmittingFriend] = useState<boolean>(false);
   const [friendError, setFriendError] = useState<string>("");
+  const [statementOpen, setStatementOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -276,6 +279,32 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Download Statement Option */}
+        <button
+          onClick={() => setStatementOpen(true)}
+          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between text-left sm:col-span-2 shadow-sm"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-sky-500/20 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform">
+              <Download className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
+                  Download Financial Statement
+                </h3>
+                <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                  PDF / Excel / CSV
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Export formal statements for tax, auditing, or record-keeping by month, week, day, year, or custom dates
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
+        </button>
       </div>
 
       {/* Manage Friends Section */}
@@ -507,6 +536,12 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Download Statement Modal */}
+      <DownloadStatementModal
+        isOpen={statementOpen}
+        onClose={() => setStatementOpen(false)}
+      />
     </div>
   );
 }

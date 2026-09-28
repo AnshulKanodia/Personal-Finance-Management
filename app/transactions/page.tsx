@@ -15,11 +15,13 @@ import {
   Send,
   Coins,
   RefreshCw,
+  Download,
 } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatINR, formatDate } from "@/lib/utils";
 import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { EditTransactionModal } from "@/components/EditTransactionModal";
+import { DownloadStatementModal } from "@/components/DownloadStatementModal";
 
 import { getCached, setCached, clearCache } from "@/lib/clientCache";
 
@@ -64,6 +66,7 @@ export default function TransactionsPage() {
   );
   const [loading, setLoading] = useState(() => transactions.length === 0);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [downloadOpen, setDownloadOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
 
   const fetchTransactions = useCallback(async (isSilent = false) => {
@@ -160,13 +163,24 @@ export default function TransactionsPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setQuickAddOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-zinc-950 font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all self-start sm:self-auto active:scale-95"
-        >
-          <Plus className="w-4 h-4 stroke-[3]" />
-          <span>New Transaction</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+          <button
+            onClick={() => setDownloadOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl border border-zinc-700/80 bg-zinc-900/80 hover:bg-zinc-800 hover:border-zinc-600 text-zinc-200 font-semibold text-xs sm:text-sm transition-all active:scale-95 shadow-sm"
+          >
+            <Download className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
+            <span className="hidden sm:inline">Download Statement</span>
+            <span className="sm:hidden">Statement</span>
+          </button>
+
+          <button
+            onClick={() => setQuickAddOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 hover:from-emerald-400 hover:to-emerald-300 text-zinc-950 font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4 stroke-[3]" />
+            <span>New Transaction</span>
+          </button>
+        </div>
       </div>
 
       {/* Filtered Period Summary Banner */}
@@ -415,6 +429,13 @@ export default function TransactionsPage() {
         transaction={editingTransaction}
         onClose={() => setEditingTransaction(null)}
         onSuccess={() => fetchTransactions()}
+      />
+
+      {/* Download Statement Modal */}
+      <DownloadStatementModal
+        isOpen={downloadOpen}
+        onClose={() => setDownloadOpen(false)}
+        categories={categories}
       />
     </div>
   );

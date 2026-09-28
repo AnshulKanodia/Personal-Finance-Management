@@ -1,7 +1,7 @@
 # 💰 RupeePulse — Personal Finance Management (PWA)
 
 > **High-Performance Indian Financial Ledger, Quantitative Analytics & Progressive Web App**  
-> A private, single-user Personal Finance Management Progressive Web App (PWA) tailored for the Indian currency system (INR). Engineered with Next.js 14 App Router, OLED cosmic design, bilateral friend ledger passbooks, zero-latency SWR caching, and a polyglot quantitative analytics suite (Go & Python).
+> A private, single-user Personal Finance Management Progressive Web App (PWA) tailored for the Indian currency system (INR). Engineered with Next.js 14 App Router, OLED cosmic design, bilateral friend ledger passbooks, zero-latency SWR caching, official PDF/Excel statement exports, and a polyglot quantitative analytics suite (Go & Python).
 
 [![Next.js](https://img.shields.io/badge/Framework-Next.js_14_App_Router-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript_5.0-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -18,7 +18,7 @@
 
 **RupeePulse** is a personal finance management ecosystem designed for the modern Indian economy.
 
-Unlike generic multi-tenant expense trackers, RupeePulse is architected as an ultra-fast, sovereign financial workstation. It combines native PWA offline capabilities with low-latency serverless routes co-located in Mumbai (`bom1`). The platform features a continuous bilateral friend ledger passbook for debt reconciliation, an OLED cosmic dark UI with 60 FPS HTML5 canvas starfields, a client-side SWR caching layer, an isolated 6-digit PIN vault, and deep financial quantitative modeling powered by Python and Go.
+Unlike generic multi-tenant expense trackers, RupeePulse is architected as an ultra-fast, sovereign financial workstation. It combines native PWA offline capabilities with low-latency serverless routes co-located in Mumbai (`bom1`). The platform features a continuous bilateral friend ledger passbook for debt reconciliation, an OLED cosmic dark UI with 60 FPS HTML5 canvas starfields, a client-side SWR caching layer, an isolated 6-digit PIN vault, executive-grade PDF/Excel statement downloads, and deep financial quantitative modeling powered by Python and Go.
 
 ---
 
@@ -31,6 +31,10 @@ Unlike generic multi-tenant expense trackers, RupeePulse is architected as an ul
   - **Amber-500** (`#f59e0b`): Cash balances and petty cash reserves.
   - **Violet-500** (`#8b5cf6`): Credit Cards and Net Banking settlements.
 - **PIN-Secured Vault**: Protected by a 6-digit numeric PIN with an enlarged touch keypad. Automatically locks on browser reload for zero-exposure privacy.
+- **📑 Statement Exporter (PDF, Excel .xlsx & CSV)**:
+  - Generate official PDF statements with executive summary cards, transaction movement tables, and confidential vault footers.
+  - Multi-sheet Excel spreadsheets (`.xlsx`) and CSV tables with category volume breakdown, payment channel analysis, and net formulas.
+  - Granular period filtering: **Complete Month**, **Week (Current / Last 7 Days)**, **Single Day**, **Full Year**, or **Custom Date Range**.
 - **Zero-Latency SWR Caching & Performance**:
   - Client-side SWR cache (`lib/clientCache.ts`) providing immediate sub-millisecond tab switching.
   - Pre-warmed MongoDB Atlas connection pools (`minPoolSize: 2`, `maxIdleTimeMS: 30000`).
@@ -65,23 +69,35 @@ Personal-Finance-Management/
 ├── app/                          # Next.js 14 App Router
 │   ├── globals.css               # Global styles & canvas rules
 │   ├── layout.tsx                # Root layout with PWA manifest injection
-│   ├── page.tsx                  # Primary dashboard view
-│   ├── api/                      # Parallelized RESTful API route handlers
-│   │   ├── auth/                 # Vault login, verification & logout endpoints
-│   │   ├── categories/           # Category CRUD & custom palettes
-│   │   ├── dashboard/            # Aggregate balance, income & expense metrics
-│   │   ├── dues/                 # Friend receivable/payable tracking
-│   │   ├── friends/              # Friend contact directory
-│   │   └── transactions/         # Transaction search, filtering & mutations
-│   └── categories/               # Category customization views
+│   ├── page.tsx                  # Primary dashboard view (2x2 mobile grid)
+│   ├── ledger/                   # Bilateral Friend Ledger continuous passbook
+│   ├── profile/                  # User profile, Category & Friend management
+│   ├── transactions/             # Transaction tracker, search & statement export
+│   └── api/                      # Parallelized RESTful API route handlers
+│       ├── auth/                 # Vault login, verification & logout endpoints
+│       ├── categories/           # Category CRUD & custom palettes
+│       ├── dashboard/            # Aggregate balance, income & expense metrics
+│       ├── dues/                 # Friend receivable/payable tracking & settlement
+│       ├── friends/              # Friend contact directory
+│       └── transactions/         # Transaction search, filtering & mutations
 ├── cli/                          # High-performance Go CLI
 │   └── main.go                   # SHA-256 cryptographic audit tool
 ├── components/                   # UI component architecture
+│   ├── DownloadStatementModal.tsx# PDF / Excel statement export modal
+│   ├── EditTransactionModal.tsx  # Modal for editing existing transactions
+│   ├── QuickTransactionModal.tsx # Fast transaction entry modal
+│   ├── QuickDueModal.tsx         # Ledger entry modal
+│   ├── SettleUpModal.tsx         # Debt settlement modal
+│   ├── VaultLockScreen.tsx       # 6-digit numeric PIN lock screen
+│   └── Starfield.tsx             # 60 FPS HTML5 canvas cosmic background
 ├── database/                     # PostgreSQL double-entry schemas & ACID triggers
 ├── engine/                       # Python quantitative financial engine
 │   └── finance_engine.py         # Monte Carlo simulator & outlier detection
-├── lib/                          # Core utilities, MongoDB pool & SWR cache
-├── models/                       # Mongoose schemas (Transaction, Friend, Category)
+├── lib/                          # Core utilities, MongoDB pool, SWR cache & PDF/Excel exporter
+│   ├── clientCache.ts            # High-performance SWR client cache
+│   ├── statementExporter.ts      # PDF, Excel (.xlsx), and CSV generator
+│   └── mongodb.ts                # Mongoose pool & IPv4 DNS resolution
+├── models/                       # Mongoose schemas (Transaction, Friend, FriendDue, Category)
 ├── public/                       # PWA manifest, service workers & icons
 ├── scripts/                      # DevOps scripts (backups & latency benchmarks)
 └── tests/                        # Automated unit tests for quantitative engines
@@ -93,7 +109,7 @@ Personal-Finance-Management/
 
 ### Prerequisites
 - **Node.js**: v18.17+ or v20+
-- **MongoDB Atlas** cluster or local MongoDB instance
+- **MongoDB Atlas** cluster or local MongoDB instance (Mumbai `ap-south-1` recommended)
 - **Python 3.11+** (for quantitative engine)
 - **Go 1.22+** (for CLI audit tools)
 - **Docker & Docker Compose** (optional for containerized deployment)
@@ -138,7 +154,7 @@ docker-compose up --build -d
 1. Push the repository to GitHub.
 2. Import into **Vercel** and select Next.js.
 3. Configure environment variables (`MONGODB_URI`, `JWT_SECRET`, `VAULT_PIN`).
-4. Ensure region is set to **Mumbai (bom1)** matching `vercel.json` for optimal latency.
+4. Ensure region is set to **Mumbai (bom1)** matching `vercel.json` for optimal sub-15ms latency.
 
 ---
 
@@ -149,6 +165,7 @@ docker-compose up --build -d
 | **Frontend & SSR** | Next.js 14 (App Router), React 18, Tailwind CSS, Lucide Icons, SWR |
 | **Backend & API** | Node.js, Next.js Route Handlers, JWT Authentication |
 | **Database** | MongoDB Atlas, Mongoose ODM, PostgreSQL 14 (Double-Entry Engine) |
+| **Export Engines** | jsPDF, jspdf-autotable, SheetJS (XLSX) |
 | **Quantitative Analytics** | Python 3.11+ (NumPy, SciPy, Pandas), Go 1.22+ (SHA-256 Engine) |
 | **DevOps & Containers** | Docker, Docker Compose, Vercel Serverless (Region `bom1`) |
 
