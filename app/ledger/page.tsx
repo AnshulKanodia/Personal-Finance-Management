@@ -50,7 +50,8 @@ interface DueItem {
 
 export default function LedgerPage() {
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [dues, setDues] = useState<DueItem[]>([]);
+  const [activeDues, setActiveDues] = useState<DueItem[]>([]);
+  const [settledDues, setSettledDues] = useState<DueItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY">("ACTIVE");
   const [historyFriendFilter, setHistoryFriendFilter] = useState<string>("ALL");
@@ -64,22 +65,25 @@ export default function LedgerPage() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [friendsRes, duesRes] = await Promise.all([
+      const [friendsRes, activeDuesRes, settledDuesRes] = await Promise.all([
         fetch("/api/friends"),
-        fetch(`/api/dues?isSettled=${activeTab === "HISTORY" ? "true" : "false"}`),
+        fetch("/api/dues?isSettled=false"),
+        fetch("/api/dues?isSettled=true"),
       ]);
 
       const friendsJson = await friendsRes.json();
-      const duesJson = await duesRes.json();
+      const activeDuesJson = await activeDuesRes.json();
+      const settledDuesJson = await settledDuesRes.json();
 
       if (friendsJson.success) setFriends(friendsJson.data);
-      if (duesJson.success) setDues(duesJson.data);
+      if (activeDuesJson.success) setActiveDues(activeDuesJson.data);
+      if (settledDuesJson.success) setSettledDues(settledDuesJson.data);
     } catch (e) {
       console.error("Failed to load Ledger data", e);
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -104,7 +108,7 @@ export default function LedgerPage() {
   };
 
   // Filter settled dues
-  const filteredSettledDues = dues.filter((d) => {
+  const filteredSettledDues = settledDues.filter((d) => {
     if (historyFriendFilter === "ALL") return true;
     return d.friendId?._id === historyFriendFilter;
   });
@@ -215,7 +219,7 @@ export default function LedgerPage() {
               : "text-zinc-500 hover:text-zinc-300"
           }`}
         >
-          Settled History ({dues.length})
+          Settled History ({settledDues.length})
         </button>
       </div>
 
@@ -242,7 +246,7 @@ export default function LedgerPage() {
             ) : (
               toTakeFriends.map((friend) => {
                 const isExpanded = expandedFriendId === friend._id;
-                const friendDues = dues.filter(
+                const friendDues = activeDues.filter(
                   (d) => d.friendId && d.friendId._id === friend._id
                 );
 
@@ -410,7 +414,7 @@ export default function LedgerPage() {
             ) : (
               toGiveFriends.map((friend) => {
                 const isExpanded = expandedFriendId === friend._id;
-                const friendDues = dues.filter(
+                const friendDues = activeDues.filter(
                   (d) => d.friendId && d.friendId._id === friend._id
                 );
 
@@ -596,10 +600,10 @@ export default function LedgerPage() {
                   : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-700"
               }`}
             >
-              All Friends ({dues.length})
+              All Friends ({settledDues.length})
             </button>
             {friends.map((f) => {
-              const count = dues.filter((d) => d.friendId && d.friendId._id === f._id).length;
+              const count = settledDues.filter((d) => d.friendId && d.friendId._id === f._id).length;
               if (count === 0) return null;
               return (
                 <button

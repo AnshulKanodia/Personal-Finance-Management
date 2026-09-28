@@ -136,14 +136,14 @@ function LoginForm() {
         )}
 
         {/* Keypad */}
-        <div className="grid grid-cols-3 gap-3 w-full max-w-[260px]">
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 w-full max-w-[280px] sm:max-w-[320px]">
           {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
             <button
               key={num}
               type="button"
               onClick={() => handleDigit(num)}
               disabled={loading}
-              className="h-14 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-lg font-bold text-zinc-200 hover:bg-zinc-800 hover:border-zinc-700 active:scale-95 active:bg-zinc-700 transition-all flex items-center justify-center"
+              className="h-14 sm:h-16 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-2xl sm:text-3xl font-bold text-zinc-100 hover:bg-zinc-800 hover:border-zinc-700 active:scale-95 active:bg-zinc-700 transition-all flex items-center justify-center shadow-md select-none touch-manipulation"
             >
               {num}
             </button>
@@ -153,7 +153,7 @@ function LoginForm() {
             type="button"
             onClick={handleClear}
             disabled={loading || pin.length === 0}
-            className="h-14 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 text-xs font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-850 active:scale-95 transition-all flex items-center justify-center"
+            className="h-14 sm:h-16 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 active:scale-95 transition-all flex items-center justify-center select-none touch-manipulation disabled:opacity-40"
           >
             Clear
           </button>
@@ -162,7 +162,7 @@ function LoginForm() {
             type="button"
             onClick={() => handleDigit("0")}
             disabled={loading}
-            className="h-14 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-lg font-bold text-zinc-200 hover:bg-zinc-800 hover:border-zinc-700 active:scale-95 active:bg-zinc-700 transition-all flex items-center justify-center"
+            className="h-14 sm:h-16 rounded-2xl bg-zinc-900/80 border border-zinc-800 text-2xl sm:text-3xl font-bold text-zinc-100 hover:bg-zinc-800 hover:border-zinc-700 active:scale-95 active:bg-zinc-700 transition-all flex items-center justify-center shadow-md select-none touch-manipulation"
           >
             0
           </button>
@@ -171,9 +171,9 @@ function LoginForm() {
             type="button"
             onClick={handleDelete}
             disabled={loading || pin.length === 0}
-            className="h-14 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 active:scale-95 transition-all flex items-center justify-center"
+            className="h-14 sm:h-16 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-850 active:scale-95 transition-all flex items-center justify-center select-none touch-manipulation disabled:opacity-40"
           >
-            <Delete className="w-5 h-5" />
+            <Delete className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 

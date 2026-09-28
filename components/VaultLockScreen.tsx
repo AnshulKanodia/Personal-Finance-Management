@@ -89,15 +89,15 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
       {/* Moving stars in cosmic night sky */}
       <Starfield />
 
-      <div className="relative w-full max-w-sm flex flex-col items-center z-10 animate-in fade-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-[340px] sm:max-w-sm flex flex-col items-center z-10 animate-in fade-in zoom-in-95 duration-300">
         {/* Brand Header */}
-        <div className="flex flex-col items-center mb-6 text-center">
-          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-sky-500 to-indigo-500 p-0.5 shadow-[0_0_35px_rgba(16,185,129,0.35)] mb-3 transition-transform hover:scale-105">
+        <div className="flex flex-col items-center mb-5 sm:mb-6 text-center">
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-sky-500 to-indigo-500 p-0.5 shadow-[0_0_35px_rgba(16,185,129,0.35)] mb-2.5 sm:mb-3 transition-transform hover:scale-105">
             <div className="w-full h-full bg-[#09090d] rounded-[14px] flex items-center justify-center">
               {isSuccess ? (
-                <Unlock className="w-8 h-8 text-emerald-400 animate-in zoom-in duration-200" />
+                <Unlock className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 animate-in zoom-in duration-200" />
               ) : (
-                <IndianRupee className="w-8 h-8 text-emerald-400" />
+                <IndianRupee className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400" />
               )}
             </div>
           </div>
@@ -113,12 +113,12 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
         </div>
 
         {/* PIN Glass Panel */}
-        <div className="w-full glass-panel rounded-3xl p-6 sm:p-7 shadow-2xl flex flex-col items-center relative overflow-hidden">
+        <div className="w-full glass-panel rounded-3xl p-5 sm:p-7 shadow-2xl flex flex-col items-center relative overflow-hidden">
           {/* Top highlight gradient line */}
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
 
           {/* PIN Indicators */}
-          <div className="flex items-center justify-center gap-2.5 my-4">
+          <div className="flex items-center justify-center gap-2.5 my-3.5 sm:my-4">
             {[0, 1, 2, 3, 4, 5].map((idx) => {
               const isFilled = pin.length > idx;
               return (
@@ -145,20 +145,20 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
               <span>Vault Unlocked!</span>
             </div>
           ) : (
-            <div className="mb-3 text-[11px] text-zinc-400 text-center">
+            <div className="mb-3 text-[11px] text-zinc-400 text-center font-medium">
               Enter 6-digit PIN code
             </div>
           )}
 
           {/* Keypad */}
-          <div className="grid grid-cols-3 gap-2.5 w-full max-w-[260px]">
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5 w-full max-w-[280px] sm:max-w-[320px]">
             {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((num) => (
               <button
                 key={num}
                 type="button"
                 onClick={() => handleDigit(num)}
                 disabled={loading || isSuccess}
-                className="h-13 rounded-2xl bg-zinc-900/70 hover:bg-zinc-800 border border-white/[0.06] hover:border-emerald-500/30 text-lg font-bold text-zinc-100 active:scale-95 active:bg-emerald-500/10 transition-all flex items-center justify-center shadow-sm"
+                className="h-14 sm:h-16 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-emerald-500/40 text-2xl sm:text-3xl font-bold text-zinc-100 active:scale-95 active:bg-emerald-500/20 active:border-emerald-500/50 transition-all flex items-center justify-center shadow-md select-none touch-manipulation"
               >
                 {num}
               </button>
@@ -168,7 +168,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
               type="button"
               onClick={handleClear}
               disabled={loading || pin.length === 0 || isSuccess}
-              className="h-13 rounded-2xl bg-zinc-900/40 hover:bg-zinc-850 border border-white/[0.04] text-xs font-medium text-zinc-500 hover:text-zinc-300 active:scale-95 transition-all flex items-center justify-center"
+              className="h-14 sm:h-16 rounded-2xl bg-zinc-900/40 hover:bg-zinc-850 border border-white/[0.04] text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all flex items-center justify-center select-none touch-manipulation disabled:opacity-40"
             >
               Clear
             </button>
@@ -177,7 +177,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
               type="button"
               onClick={() => handleDigit("0")}
               disabled={loading || isSuccess}
-              className="h-13 rounded-2xl bg-zinc-900/70 hover:bg-zinc-800 border border-white/[0.06] hover:border-emerald-500/30 text-lg font-bold text-zinc-100 active:scale-95 active:bg-emerald-500/10 transition-all flex items-center justify-center shadow-sm"
+              className="h-14 sm:h-16 rounded-2xl bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-emerald-500/40 text-2xl sm:text-3xl font-bold text-zinc-100 active:scale-95 active:bg-emerald-500/20 active:border-emerald-500/50 transition-all flex items-center justify-center shadow-md select-none touch-manipulation"
             >
               0
             </button>
@@ -186,15 +186,15 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
               type="button"
               onClick={handleDelete}
               disabled={loading || pin.length === 0 || isSuccess}
-              className="h-13 rounded-2xl bg-zinc-900/40 hover:bg-zinc-850 border border-white/[0.04] text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all flex items-center justify-center"
+              className="h-14 sm:h-16 rounded-2xl bg-zinc-900/40 hover:bg-zinc-850 border border-white/[0.04] text-zinc-400 hover:text-zinc-200 active:scale-95 transition-all flex items-center justify-center select-none touch-manipulation disabled:opacity-40"
             >
-              <Delete className="w-5 h-5" />
+              <Delete className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
-          <div className="mt-5 text-center">
-            <span className="text-[11px] text-zinc-600 flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-zinc-500" />
+          <div className="mt-4 sm:mt-5 text-center">
+            <span className="text-[11px] text-zinc-500 flex items-center justify-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
               <span>Private Vault Encrypted</span>
             </span>
           </div>
