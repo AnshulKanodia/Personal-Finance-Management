@@ -20,9 +20,12 @@ import {
   IndianRupee,
   Sparkles,
   Download,
+  FileSpreadsheet,
+  FileText,
+  Calendar,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
-import { clearCache } from "@/lib/clientCache";
+import { clearCache, getCached, setCached } from "@/lib/clientCache";
 import { DownloadStatementModal } from "@/components/DownloadStatementModal";
 
 interface Friend {
@@ -30,6 +33,11 @@ interface Friend {
   name: string;
   phone?: string;
   netBalance: number;
+}
+
+interface Category {
+  _id: string;
+  name: string;
 }
 
 export default function ProfilePage() {
@@ -54,6 +62,7 @@ export default function ProfilePage() {
   const [submittingFriend, setSubmittingFriend] = useState<boolean>(false);
   const [friendError, setFriendError] = useState<string>("");
   const [statementOpen, setStatementOpen] = useState<boolean>(false);
+  const [categories, setCategories] = useState<Category[]>(() => getCached<Category[]>("all_categories") || []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -63,7 +72,22 @@ export default function ProfilePage() {
       if (savedEmail) setEmail(savedEmail);
     }
     fetchFriends();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch("/api/categories");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        const sorted = [...json.data].sort((a: Category, b: Category) => a.name.localeCompare(b.name));
+        setCategories(sorted);
+        setCached("all_categories", sorted);
+      }
+    } catch (e) {
+      console.error("Failed to load categories", e);
+    }
+  };
 
   const fetchFriends = async () => {
     try {
@@ -218,10 +242,18 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
+            <button
+              onClick={() => setStatementOpen(true)}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Download Statement</span>
+            </button>
+
             <button
               onClick={handleOpenEditProfile}
-              className="px-4 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+              className="px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Edit Profile</span>
@@ -229,7 +261,7 @@ export default function ProfilePage() {
 
             <button
               onClick={handleLockVault}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center gap-1.5 active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
               title="Lock vault immediately"
             >
               <Lock className="w-3.5 h-3.5" />
@@ -281,30 +313,51 @@ export default function ProfilePage() {
         </div>
 
         {/* Download Statement Option */}
-        <button
-          onClick={() => setStatementOpen(true)}
-          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between text-left sm:col-span-2 shadow-sm"
-        >
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-xl bg-gradient-to-tr from-emerald-500/20 to-sky-500/20 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform">
-              <Download className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
-                  Download Financial Statement
-                </h3>
-                <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                  PDF / Excel / CSV
-                </span>
+        <div className="sm:col-span-2 p-5 sm:p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 transition-all group relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-sky-500/10 to-indigo-500/20 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0 shadow-inner">
+                <Download className="w-6 h-6 stroke-[2.2]" />
               </div>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                Export formal statements for tax, auditing, or record-keeping by month, week, day, year, or custom dates
-              </p>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-base font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors">
+                    Download Account Statement
+                  </h3>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">
+                    Bank-Grade PDF / Excel / CSV
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xl">
+                  Generate professional, auditable financial statements sorted by Date, Payment Mode, Amount, and Category. Choose from Month, Week, Day, Year, or Custom date ranges.
+                </p>
+
+                {/* Badges / Features preview */}
+                <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px] text-zinc-400">
+                  <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
+                    <FileText className="w-3 h-3 text-emerald-400" /> Executive PDF
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
+                    <FileSpreadsheet className="w-3 h-3 text-sky-400" /> Multi-Sheet Excel (.xlsx)
+                  </span>
+                  <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
+                    <Calendar className="w-3 h-3 text-amber-400" /> Any Period & Filter
+                  </span>
+                </div>
+              </div>
             </div>
+
+            <button
+              onClick={() => setStatementOpen(true)}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer flex-shrink-0"
+            >
+              <Download className="w-4 h-4 stroke-[2.5]" />
+              <span>Export Statement</span>
+            </button>
           </div>
-          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
-        </button>
+        </div>
       </div>
 
       {/* Manage Friends Section */}
@@ -541,6 +594,7 @@ export default function ProfilePage() {
       <DownloadStatementModal
         isOpen={statementOpen}
         onClose={() => setStatementOpen(false)}
+        categories={categories}
       />
     </div>
   );
