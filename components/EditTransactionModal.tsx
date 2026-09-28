@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Trash2, Calendar, Tag, Check, IndianRupee } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { clearCache } from "@/lib/clientCache";
 
 interface Category {
   _id: string;
@@ -151,6 +152,8 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
         return;
       }
 
+      clearCache();
+      window.dispatchEvent(new CustomEvent("finance_data_updated"));
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -169,6 +172,8 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
       });
       const data = await res.json();
       if (data.success) {
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
         onSuccess();
         onClose();
       } else {

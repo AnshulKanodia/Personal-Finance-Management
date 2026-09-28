@@ -17,7 +17,10 @@ export async function GET() {
       categories = await Category.find().sort({ name: 1 }).lean();
     }
 
-    return NextResponse.json({ success: true, data: categories });
+    return NextResponse.json(
+      { success: true, data: categories },
+      { headers: { "Cache-Control": "public, max-age=60, stale-while-revalidate=300" } }
+    );
   } catch (error: any) {
     console.error("Error fetching categories:", error);
     return NextResponse.json(

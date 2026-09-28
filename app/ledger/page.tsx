@@ -21,6 +21,8 @@ import { formatINR, formatDate } from "@/lib/utils";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { SettleUpModal } from "@/components/SettleUpModal";
 
+import { getCached, setCached } from "@/lib/clientCache";
+
 interface Friend {
   _id: string;
   name: string;
@@ -49,10 +51,10 @@ interface DueItem {
 }
 
 export default function LedgerPage() {
-  const [friends, setFriends] = useState<Friend[]>([]);
-  const [activeDues, setActiveDues] = useState<DueItem[]>([]);
-  const [settledDues, setSettledDues] = useState<DueItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [friends, setFriends] = useState<Friend[]>(() => getCached<Friend[]>("ledger_friends") || []);
+  const [activeDues, setActiveDues] = useState<DueItem[]>(() => getCached<DueItem[]>("ledger_active_dues") || []);
+  const [settledDues, setSettledDues] = useState<DueItem[]>(() => getCached<DueItem[]>("ledger_settled_dues") || []);
+  const [loading, setLoading] = useState(() => friends.length === 0);
   const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY">("ACTIVE");
   const [historyFriendFilter, setHistoryFriendFilter] = useState<string>("ALL");
 
@@ -62,9 +64,9 @@ export default function LedgerPage() {
   const [settleFriend, setSettleFriend] = useState<Friend | null>(null);
   const [expandedFriendId, setExpandedFriendId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [friendsRes, activeDuesRes, settledDuesRes] = await Promise.all([
         fetch("/api/friends"),
         fetch("/api/dues?isSettled=false"),
@@ -75,9 +77,18 @@ export default function LedgerPage() {
       const activeDuesJson = await activeDuesRes.json();
       const settledDuesJson = await settledDuesRes.json();
 
-      if (friendsJson.success) setFriends(friendsJson.data);
-      if (activeDuesJson.success) setActiveDues(activeDuesJson.data);
-      if (settledDuesJson.success) setSettledDues(settledDuesJson.data);
+      if (friendsJson.success) {
+        setFriends(friendsJson.data);
+        setCached("ledger_friends", friendsJson.data);
+      }
+      if (activeDuesJson.success) {
+        setActiveDues(activeDuesJson.data);
+        setCached("ledger_active_dues", activeDuesJson.data);
+      }
+      if (settledDuesJson.success) {
+        setSettledDues(settledDuesJson.data);
+        setCached("ledger_settled_dues", settledDuesJson.data);
+      }
     } catch (e) {
       console.error("Failed to load Ledger data", e);
     } finally {
@@ -86,7 +97,20 @@ export default function LedgerPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    const cachedFriends = getCached<Friend[]>("ledger_friends");
+    if (cachedFriends) {
+      setFriends(cachedFriends);
+      setLoading(false);
+      fetchData(true);
+    } else {
+      fetchData(false);
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    const handleUpdate = () => fetchData(true);
+    window.addEventListener("finance_data_updated", handleUpdate);
+    return () => window.removeEventListener("finance_data_updated", handleUpdate);
   }, [fetchData]);
 
   // Aggregate totals from true net balances

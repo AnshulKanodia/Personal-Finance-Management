@@ -10,18 +10,19 @@ export async function GET() {
   try {
     await connectToDatabase();
 
-    const friends = await Friend.find().sort({ name: 1 }).lean();
-
-    // Aggregate unsettled dues for each friend
-    const unsettledDues = await FriendDue.aggregate([
-      { $match: { isSettled: false } },
-      {
-        $group: {
-          _id: { friendId: "$friendId", type: "$type" },
-          total: { $sum: "$amount" },
-          count: { $sum: 1 },
+    // Fetch friends and unsettled dues concurrently in parallel
+    const [friends, unsettledDues] = await Promise.all([
+      Friend.find().sort({ name: 1 }).lean(),
+      FriendDue.aggregate([
+        { $match: { isSettled: false } },
+        {
+          $group: {
+            _id: { friendId: "$friendId", type: "$type" },
+            total: { $sum: "$amount" },
+            count: { $sum: 1 },
+          },
         },
-      },
+      ]),
     ]);
 
     // Map dues to friends

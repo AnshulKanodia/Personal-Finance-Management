@@ -27,6 +27,8 @@ import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { EditTransactionModal } from "@/components/EditTransactionModal";
 
+import { getCached, setCached } from "@/lib/clientCache";
+
 interface DashboardData {
   totalSpendThisMonth: number;
   totalIncomeThisMonth: number;
@@ -40,24 +42,28 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
 
+  const [data, setData] = useState<DashboardData | null>(() =>
+    getCached<DashboardData>(`dashboard_${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`)
+  );
+  const [loading, setLoading] = useState(() => !data);
+
   const [quickAddType, setQuickAddType] = useState<"EXPENSE" | "INCOME" | null>(null);
   const [quickDueOpen, setQuickDueOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
 
-  const fetchDashboard = useCallback(async () => {
+  const fetchDashboard = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const res = await fetch(`/api/dashboard?month=${currentMonth}`);
       const json = await res.json();
       if (json.success) {
         setData(json.data);
+        setCached(`dashboard_${currentMonth}`, json.data);
       }
     } catch (e) {
       console.error("Dashboard fetch error:", e);
@@ -67,12 +73,19 @@ export default function DashboardPage() {
   }, [currentMonth]);
 
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    const cached = getCached<DashboardData>(`dashboard_${currentMonth}`);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+      fetchDashboard(true);
+    } else {
+      fetchDashboard(false);
+    }
+  }, [fetchDashboard, currentMonth]);
 
   // Listen to global updates
   useEffect(() => {
-    const handleUpdate = () => fetchDashboard();
+    const handleUpdate = () => fetchDashboard(true);
     window.addEventListener("finance_data_updated", handleUpdate);
     return () => window.removeEventListener("finance_data_updated", handleUpdate);
   }, [fetchDashboard]);

@@ -21,6 +21,8 @@ import { formatINR, formatDate } from "@/lib/utils";
 import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { EditTransactionModal } from "@/components/EditTransactionModal";
 
+import { getCached, setCached, clearCache } from "@/lib/clientCache";
+
 interface TransactionItem {
   _id: string;
   amount: number;
@@ -44,12 +46,6 @@ interface Category {
 }
 
 export default function TransactionsPage() {
-  const [transactions, setTransactions] = useState<TransactionItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
-
   // Filters
   const [typeFilter, setTypeFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
@@ -60,9 +56,19 @@ export default function TransactionsPage() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
 
-  const fetchTransactions = useCallback(async () => {
+  const [transactions, setTransactions] = useState<TransactionItem[]>(() =>
+    getCached<TransactionItem[]>(`txs_${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}_ALL_ALL_ALL_`) || []
+  );
+  const [categories, setCategories] = useState<Category[]>(() =>
+    getCached<Category[]>("all_categories") || []
+  );
+  const [loading, setLoading] = useState(() => transactions.length === 0);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null);
+
+  const fetchTransactions = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const params = new URLSearchParams();
       if (typeFilter !== "ALL") params.append("type", typeFilter);
       if (categoryFilter !== "ALL") params.append("category", categoryFilter);
@@ -74,6 +80,8 @@ export default function TransactionsPage() {
       const json = await res.json();
       if (json.success) {
         setTransactions(json.data);
+        const key = `txs_${monthFilter}_${typeFilter}_${categoryFilter}_${modeFilter}_${searchQuery}`;
+        setCached(key, json.data);
       }
     } catch (e) {
       console.error("Failed to fetch transactions:", e);
@@ -83,10 +91,22 @@ export default function TransactionsPage() {
   }, [typeFilter, categoryFilter, modeFilter, searchQuery, monthFilter]);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    const key = `txs_${monthFilter}_${typeFilter}_${categoryFilter}_${modeFilter}_${searchQuery}`;
+    const cached = getCached<TransactionItem[]>(key);
+    if (cached) {
+      setTransactions(cached);
+      setLoading(false);
+      fetchTransactions(true);
+    } else {
+      fetchTransactions(false);
+    }
+  }, [fetchTransactions, monthFilter, typeFilter, categoryFilter, modeFilter, searchQuery]);
 
   useEffect(() => {
+    const cachedCats = getCached<Category[]>("all_categories");
+    if (cachedCats) {
+      setCategories(cachedCats);
+    }
     fetch("/api/categories")
       .then((res) => res.json())
       .then((json) => {
@@ -95,6 +115,7 @@ export default function TransactionsPage() {
             a.name.localeCompare(b.name)
           );
           setCategories(sorted);
+          setCached("all_categories", sorted);
         }
       })
       .catch(console.error);
@@ -117,6 +138,8 @@ export default function TransactionsPage() {
       const res = await fetch(`/api/transactions/${id}`, { method: "DELETE" });
       const json = await res.json();
       if (json.success) {
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
         setTransactions((prev) => prev.filter((t) => t._id !== id));
       }
     } catch (e) {

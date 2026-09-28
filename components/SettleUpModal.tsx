@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, IndianRupee, ArrowRight, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { clearCache } from "@/lib/clientCache";
 
 interface Category {
   _id: string;
@@ -89,6 +90,8 @@ export const SettleUpModal: React.FC<SettleUpModalProps> = ({
         return;
       }
 
+      clearCache();
+      window.dispatchEvent(new CustomEvent("finance_data_updated"));
       onSuccess();
       onClose();
     } catch (err: any) {

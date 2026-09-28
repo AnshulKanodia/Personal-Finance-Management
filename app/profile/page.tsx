@@ -21,6 +21,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { clearCache } from "@/lib/clientCache";
 
 interface Friend {
   _id: string;
@@ -120,6 +121,8 @@ export default function ProfilePage() {
         return;
       }
 
+      clearCache();
+      window.dispatchEvent(new CustomEvent("finance_data_updated"));
       setNewFriendName("");
       setNewFriendPhone("");
       setIsAddFriendOpen(false);
@@ -141,6 +144,8 @@ export default function ProfilePage() {
       });
       const json = await res.json();
       if (json.success) {
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
         setFriends((prev) => prev.filter((f) => f._id !== friendId));
       } else {
         alert(json.message || "Failed to delete friend");

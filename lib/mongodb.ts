@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import dns from "dns";
 
 try {
+  dns.setDefaultResultOrder("ipv4first");
   dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
 } catch {
   // Ignore in environments where setServers is restricted
@@ -43,7 +44,9 @@ async function connectToDatabase(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      maxPoolSize: 10, // Maintain up to 10 socket connections in serverless pool
+      maxPoolSize: 10, // Maintain active pool in serverless
+      minPoolSize: 2,  // Keep warm sockets alive to eliminate cold handshake latency
+      maxIdleTimeMS: 30000,
       serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
     };

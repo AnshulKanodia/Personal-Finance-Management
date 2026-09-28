@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, UserPlus, IndianRupee, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { formatINR } from "@/lib/utils";
+import { clearCache } from "@/lib/clientCache";
 
 interface Friend {
   _id: string;
@@ -135,6 +136,8 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
         return;
       }
 
+      clearCache();
+      window.dispatchEvent(new CustomEvent("finance_data_updated"));
       setAmount("");
       setNotes("");
       setIsCreatingFriend(false);

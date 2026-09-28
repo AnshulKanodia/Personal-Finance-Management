@@ -69,6 +69,8 @@ const FriendDueSchema = new Schema<IFriendDue>(
 
 FriendDueSchema.index({ friendId: 1, isSettled: 1 });
 FriendDueSchema.index({ type: 1, isSettled: 1 });
+FriendDueSchema.index({ isSettled: 1, date: -1, createdAt: -1 });
+FriendDueSchema.index({ isSettled: 1, friendId: 1 });
 
 const FriendDue: Model<IFriendDue> =
   mongoose.models.FriendDue || mongoose.model<IFriendDue>("FriendDue", FriendDueSchema);

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, IndianRupee, Sparkles, Calendar, Tag, CreditCard } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { clearCache } from "@/lib/clientCache";
 
 interface Category {
   _id: string;
@@ -122,7 +123,9 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
         return;
       }
 
-      // Reset and close
+      // Reset, clear cache, notify listeners, and close
+      clearCache();
+      window.dispatchEvent(new CustomEvent("finance_data_updated"));
       setAmount("");
       setNotes("");
       onSuccess();
