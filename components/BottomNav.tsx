@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   ReceiptIndianRupee,
   Users,
-  Tags,
+  User,
   Plus,
 } from "lucide-react";
 
@@ -23,8 +23,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenQuickAdd }) => {
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Tracker", icon: ReceiptIndianRupee },
-    { href: "/khaata", label: "Khaata", icon: Users },
-    { href: "/categories", label: "Categories", icon: Tags },
+    { href: "/ledger", label: "Ledger", icon: Users },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
@@ -33,7 +33,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenQuickAdd }) => {
         {/* First 2 items */}
         {navItems.slice(0, 2).map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive =
+            pathname === item.href || (item.href === "/ledger" && pathname === "/khaata");
           return (
             <Link
               key={item.href}
@@ -62,7 +63,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenQuickAdd }) => {
         {/* Last 2 items */}
         {navItems.slice(2, 4).map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href;
+          const isActive =
+            pathname === item.href || (item.href === "/ledger" && pathname === "/khaata");
           return (
             <Link
               key={item.href}

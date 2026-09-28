@@ -17,6 +17,7 @@ import {
   Send,
   Coins,
   RefreshCw,
+  Edit2,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { SpendCategoryChart } from "@/components/SpendCategoryChart";
@@ -24,6 +25,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatINR, formatDate } from "@/lib/utils";
 import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { QuickDueModal } from "@/components/QuickDueModal";
+import { EditTransactionModal } from "@/components/EditTransactionModal";
 
 interface DashboardData {
   totalSpendThisMonth: number;
@@ -47,6 +49,7 @@ export default function DashboardPage() {
 
   const [quickAddType, setQuickAddType] = useState<"EXPENSE" | "INCOME" | null>(null);
   const [quickDueOpen, setQuickDueOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -132,19 +135,19 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 4 Core Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 4 Core Top Stat Cards (2x2 Grid on Mobile, 4 Cols on Desktop) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         <StatCard
-          title="Total Spend (Month)"
+          title="Total Spend"
           amount={data?.totalSpendThisMonth ?? 0}
           icon={TrendingDown}
           variant="rose"
           subtitle="Monthly Outflow"
-          badge="Expenses"
+          badge="Expense"
         />
 
         <StatCard
-          title="Liquid Cash Balance"
+          title="Liquid Cash"
           amount={data?.cashBalance ?? 0}
           icon={Wallet}
           variant={data && data.cashBalance >= 0 ? "emerald" : "rose"}
@@ -153,73 +156,22 @@ export default function DashboardPage() {
         />
 
         <StatCard
-          title="Net Owed To Me"
+          title="To Take"
           amount={data?.netOwedToMe ?? 0}
           icon={ArrowDownLeft}
           variant="emerald"
-          subtitle="Receivables from friends"
-          badge="To Take"
+          subtitle="Receivables"
+          badge="Ledger"
         />
 
         <StatCard
-          title="Net I Owe"
+          title="To Give"
           amount={data?.netIOwe ?? 0}
           icon={ArrowUpRight}
           variant="amber"
-          subtitle="Payables to friends"
-          badge="To Give"
+          subtitle="Payables"
+          badge="Ledger"
         />
-      </div>
-
-      {/* Quick Action Bar */}
-      <div className="grid grid-cols-3 gap-3">
-        <button
-          onClick={() => setQuickAddType("EXPENSE")}
-          className="p-3 sm:p-4 rounded-2xl bg-zinc-900/60 border border-rose-500/20 hover:border-rose-500/40 hover:bg-rose-500/5 transition-all text-left flex items-center justify-between group"
-        >
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:scale-110 transition-transform">
-              <TrendingDown className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-bold text-zinc-200">Log Expense</div>
-              <div className="text-[10px] text-zinc-500 hidden sm:block">Outflow payment</div>
-            </div>
-          </div>
-          <Plus className="w-4 h-4 text-zinc-500 group-hover:text-rose-400" />
-        </button>
-
-        <button
-          onClick={() => setQuickAddType("INCOME")}
-          className="p-3 sm:p-4 rounded-2xl bg-zinc-900/60 border border-emerald-500/20 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-left flex items-center justify-between group"
-        >
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-bold text-zinc-200">Add Income</div>
-              <div className="text-[10px] text-zinc-500 hidden sm:block">Salary or credit</div>
-            </div>
-          </div>
-          <Plus className="w-4 h-4 text-zinc-500 group-hover:text-emerald-400" />
-        </button>
-
-        <button
-          onClick={() => setQuickDueOpen(true)}
-          className="p-3 sm:p-4 rounded-2xl bg-zinc-900/60 border border-sky-500/20 hover:border-sky-500/40 hover:bg-sky-500/5 transition-all text-left flex items-center justify-between group"
-        >
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-400 group-hover:scale-110 transition-transform">
-              <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-            <div>
-              <div className="text-xs sm:text-sm font-bold text-zinc-200">Khaata Split</div>
-              <div className="text-[10px] text-zinc-500 hidden sm:block">Friend ledger due</div>
-            </div>
-          </div>
-          <Plus className="w-4 h-4 text-zinc-500 group-hover:text-sky-400" />
-        </button>
       </div>
 
       {/* Middle Section: Spend Donut Chart + Payment Modes Breakdown */}
@@ -243,7 +195,7 @@ export default function DashboardPage() {
               {[
                 {
                   id: "UPI",
-                  label: "UPI (GPay / PhonePe / Paytm)",
+                  label: "UPI Payments",
                   icon: Send,
                   border: "border-sky-500/20",
                   text: "text-sky-400",
@@ -259,7 +211,7 @@ export default function DashboardPage() {
                 },
                 {
                   id: "CARD",
-                  label: "Credit / Debit Cards",
+                  label: "Card / Net Banking",
                   icon: CreditCard,
                   border: "border-violet-500/20",
                   text: "text-violet-400",
@@ -334,15 +286,8 @@ export default function DashboardPage() {
                   className="py-3.5 flex items-center justify-between group hover:bg-zinc-900/40 px-2 rounded-xl transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className="p-2.5 rounded-xl border flex items-center justify-center"
-                      style={{
-                        backgroundColor: `${cat.color}15`,
-                        borderColor: `${cat.color}30`,
-                        color: cat.color,
-                      }}
-                    >
-                      <CategoryIcon name={cat.icon} className="w-4 h-4" />
+                    <div className="p-2.5 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 flex items-center justify-center">
+                      <CategoryIcon name={cat.icon} className="w-4 h-4 text-zinc-300" />
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-zinc-200">
@@ -359,15 +304,25 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div
-                      className={`text-sm sm:text-base font-bold font-mono ${
-                        isExpense ? "text-rose-400" : "text-emerald-400"
-                      }`}
-                    >
-                      {isExpense ? "-" : "+"}
-                      {formatINR(tx.amount)}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div
+                        className={`text-sm sm:text-base font-bold font-mono ${
+                          isExpense ? "text-rose-400" : "text-emerald-400"
+                        }`}
+                      >
+                        {isExpense ? "-" : "+"}
+                        {formatINR(tx.amount)}
+                      </div>
                     </div>
+
+                    <button
+                      onClick={() => setEditingTransaction(tx)}
+                      className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors opacity-70 group-hover:opacity-100"
+                      title="Edit transaction"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               );
@@ -377,12 +332,6 @@ export default function DashboardPage() {
           <div className="text-center py-10">
             <ReceiptIndianRupee className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
             <p className="text-sm text-zinc-400">No transactions recorded yet</p>
-            <button
-              onClick={() => setQuickAddType("EXPENSE")}
-              className="mt-3 text-xs text-emerald-400 hover:text-emerald-300 font-semibold"
-            >
-              + Log your first expense
-            </button>
           </div>
         )}
       </div>
@@ -398,6 +347,13 @@ export default function DashboardPage() {
       <QuickDueModal
         isOpen={quickDueOpen}
         onClose={() => setQuickDueOpen(false)}
+        onSuccess={() => fetchDashboard()}
+      />
+
+      <EditTransactionModal
+        isOpen={editingTransaction !== null}
+        transaction={editingTransaction}
+        onClose={() => setEditingTransaction(null)}
         onSuccess={() => fetchDashboard()}
       />
     </div>

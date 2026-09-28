@@ -45,7 +45,10 @@ export default function CategoriesPage() {
       const res = await fetch("/api/categories");
       const json = await res.json();
       if (json.success) {
-        setCategories(json.data);
+        const sorted = [...json.data].sort((a: Category, b: Category) =>
+          a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+        );
+        setCategories(sorted);
       }
     } catch (e) {
       console.error("Failed to fetch categories", e);

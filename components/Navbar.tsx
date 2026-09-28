@@ -12,6 +12,7 @@ import {
   Lock,
   LogOut,
   IndianRupee,
+  User,
 } from "lucide-react";
 
 interface NavbarProps {
@@ -42,8 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
   const navLinks = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/transactions", label: "Tracker", icon: ReceiptIndianRupee },
-    { href: "/khaata", label: "Khaata", icon: Users },
-    { href: "/categories", label: "Categories", icon: Tags },
+    { href: "/ledger", label: "Ledger", icon: Users },
+    { href: "/profile", label: "Profile", icon: User },
   ];
 
   return (
@@ -70,7 +71,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
         <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
-            const isActive = pathname === link.href;
+            const isActive =
+              pathname === link.href || (link.href === "/ledger" && pathname === "/khaata");
             return (
               <Link
                 key={link.href}

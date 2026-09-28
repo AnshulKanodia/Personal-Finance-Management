@@ -19,6 +19,7 @@ import {
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatINR, formatDate } from "@/lib/utils";
 import { QuickTransactionModal } from "@/components/QuickTransactionModal";
+import { EditTransactionModal } from "@/components/EditTransactionModal";
 
 interface TransactionItem {
   _id: string;
@@ -89,7 +90,12 @@ export default function TransactionsPage() {
     fetch("/api/categories")
       .then((res) => res.json())
       .then((json) => {
-        if (json.success) setCategories(json.data);
+        if (json.success) {
+          const sorted = [...json.data].sort((a: Category, b: Category) =>
+            a.name.localeCompare(b.name)
+          );
+          setCategories(sorted);
+        }
       })
       .catch(console.error);
   }, []);
@@ -348,13 +354,23 @@ export default function TransactionsPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleDelete(tx._id)}
-                      className="p-2 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-80 group-hover:opacity-100"
-                      title="Delete transaction"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditingTransaction(tx)}
+                        className="p-2 rounded-lg text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors opacity-80 group-hover:opacity-100"
+                        title="Edit transaction"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(tx._id)}
+                        className="p-2 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors opacity-80 group-hover:opacity-100"
+                        title="Delete transaction"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -367,6 +383,14 @@ export default function TransactionsPage() {
       <QuickTransactionModal
         isOpen={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
+        onSuccess={() => fetchTransactions()}
+      />
+
+      {/* Edit Modal */}
+      <EditTransactionModal
+        isOpen={editingTransaction !== null}
+        transaction={editingTransaction}
+        onClose={() => setEditingTransaction(null)}
         onSuccess={() => fetchTransactions()}
       />
     </div>

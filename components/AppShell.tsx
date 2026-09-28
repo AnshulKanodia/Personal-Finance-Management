@@ -28,7 +28,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   };
 
   const handleOpenAction = () => {
-    if (pathname === "/khaata") {
+    if (pathname === "/khaata" || pathname === "/ledger") {
       setQuickDueOpen(true);
     } else {
       setQuickAddOpen(true);

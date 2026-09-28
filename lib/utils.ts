@@ -60,16 +60,18 @@ export function formatDateTime(dateInput: string | Date | number | undefined): s
 }
 
 export const DEFAULT_CATEGORIES = [
-  { name: "Groceries", color: "#10b981", icon: "ShoppingCart" },
-  { name: "Food & Dining", color: "#f59e0b", icon: "Utensils" },
-  { name: "Rent & Bills", color: "#06b6d4", icon: "Home" },
-  { name: "Shopping", color: "#ec4899", icon: "ShoppingBag" },
-  { name: "Travel & Fuel", color: "#8b5cf6", icon: "Fuel" },
-  { name: "Investments & SIP", color: "#14b8a6", icon: "TrendingUp" },
-  { name: "Salary", color: "#22c55e", icon: "Briefcase" },
-  { name: "Freelance", color: "#3b82f6", icon: "Laptop" },
-  { name: "Health & Medical", color: "#ef4444", icon: "HeartPulse" },
   { name: "Entertainment", color: "#a855f7", icon: "Film" },
-  { name: "UPI Transfers", color: "#0ea5e9", icon: "Send" },
+  { name: "Food & Dining", color: "#f59e0b", icon: "Utensils" },
+  { name: "Freelance", color: "#3b82f6", icon: "Laptop" },
+  { name: "Groceries", color: "#10b981", icon: "ShoppingCart" },
+  { name: "Health & Medical", color: "#ef4444", icon: "HeartPulse" },
+  { name: "Investments & SIP", color: "#14b8a6", icon: "TrendingUp" },
   { name: "Other", color: "#71717a", icon: "MoreHorizontal" },
+  { name: "Rent & Bills", color: "#06b6d4", icon: "Home" },
+  { name: "Salary", color: "#22c55e", icon: "Briefcase" },
+  { name: "Shopping", color: "#ec4899", icon: "ShoppingBag" },
+  { name: "Snacks", color: "#f97316", icon: "Coffee" },
+  { name: "Travel & Fuel", color: "#8b5cf6", icon: "Fuel" },
+  { name: "UPI Transfers", color: "#0ea5e9", icon: "Send" },
+  { name: "Water", color: "#06b6d4", icon: "Droplets" },
 ];

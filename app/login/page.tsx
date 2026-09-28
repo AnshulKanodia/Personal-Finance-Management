@@ -30,8 +30,8 @@ function LoginForm() {
       const nextPin = pin + digit;
       setPin(nextPin);
       setError("");
-      // Auto-submit if 4 digits
-      if (nextPin.length === 4) {
+      // Auto-submit if 6 digits
+      if (nextPin.length === 6) {
         attemptLogin(nextPin);
       }
     }
@@ -83,7 +83,7 @@ function LoginForm() {
         handleDigit(e.key);
       } else if (e.key === "Backspace") {
         handleDelete();
-      } else if (e.key === "Enter") {
+      } else if (e.key === "Enter" && pin.length >= 6) {
         attemptLogin(pin);
       }
     };
@@ -108,17 +108,17 @@ function LoginForm() {
       <div className="w-full rounded-3xl bg-zinc-900/60 backdrop-blur-xl border border-zinc-800/80 p-6 sm:p-8 shadow-2xl flex flex-col items-center">
         <div className="flex items-center gap-1.5 text-xs text-zinc-400 mb-6">
           <Lock className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Enter Secure PIN</span>
+          <span>Enter 6-Digit PIN</span>
         </div>
 
         {/* PIN Indicators */}
-        <div className="flex items-center justify-center gap-3 mb-6">
-          {[0, 1, 2, 3].map((idx) => {
+        <div className="flex items-center justify-center gap-2.5 mb-6">
+          {[0, 1, 2, 3, 4, 5].map((idx) => {
             const isFilled = pin.length > idx;
             return (
               <div
                 key={idx}
-                className={`w-4 h-4 rounded-full transition-all duration-200 ${
+                className={`w-3.5 h-3.5 rounded-full transition-all duration-200 ${
                   isFilled
                     ? "bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.8)] scale-110"
                     : "border-2 border-zinc-700 bg-zinc-900"

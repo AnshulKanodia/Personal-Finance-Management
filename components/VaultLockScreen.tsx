@@ -21,7 +21,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
       const nextPin = pin + digit;
       setPin(nextPin);
       setError("");
-      if (nextPin.length === 4) {
+      if (nextPin.length === 6) {
         attemptUnlock(nextPin);
       }
     }
@@ -76,7 +76,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
         handleDigit(e.key);
       } else if (e.key === "Backspace") {
         handleDelete();
-      } else if (e.key === "Enter" && pin.length >= 4) {
+      } else if (e.key === "Enter" && pin.length >= 6) {
         attemptUnlock(pin);
       }
     };
@@ -118,8 +118,8 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
           <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
 
           {/* PIN Indicators */}
-          <div className="flex items-center justify-center gap-3.5 my-4">
-            {[0, 1, 2, 3].map((idx) => {
+          <div className="flex items-center justify-center gap-2.5 my-4">
+            {[0, 1, 2, 3, 4, 5].map((idx) => {
               const isFilled = pin.length > idx;
               return (
                 <div
@@ -146,7 +146,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
             </div>
           ) : (
             <div className="mb-3 text-[11px] text-zinc-400 text-center">
-              Enter 4-digit PIN code
+              Enter 6-digit PIN code
             </div>
           )}
 

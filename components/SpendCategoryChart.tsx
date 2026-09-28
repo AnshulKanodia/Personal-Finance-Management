@@ -113,11 +113,7 @@ export const SpendCategoryChart: React.FC<SpendCategoryChartProps> = ({ data }) 
               key={item._id || item.name}
               className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/50 border border-zinc-800/50 text-xs"
             >
-              <div className="flex items-center gap-2 truncate">
-                <span
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: item.color }}
-                />
+              <div className="flex items-center gap-1.5 truncate">
                 <span className="text-zinc-300 truncate font-medium">{item.name}</span>
               </div>
               <span className="text-zinc-400 font-mono text-[11px] ml-1 flex-shrink-0">

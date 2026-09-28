@@ -59,29 +59,29 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl glass-panel p-5 transition-all duration-300 ${variantStyles.border} ${variantStyles.glow} group hover:-translate-y-0.5`}
+      className={`relative overflow-hidden rounded-2xl glass-panel p-3.5 sm:p-5 transition-all duration-300 ${variantStyles.border} ${variantStyles.glow} group hover:-translate-y-0.5`}
     >
       {/* Top hairline glass reflection */}
       <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-medium tracking-wider text-zinc-400 uppercase">
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-[11px] sm:text-xs font-semibold tracking-tight sm:tracking-wider text-zinc-400 uppercase truncate">
           {title}
         </span>
-        <div className={`p-2.5 rounded-xl ${variantStyles.iconBg} transition-transform group-hover:scale-105`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-1.5 sm:p-2.5 rounded-lg sm:rounded-xl ${variantStyles.iconBg} transition-transform group-hover:scale-105 flex-shrink-0`}>
+          <Icon className="w-3.5 h-3.5 sm:w-5 sm:h-5" />
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className={`text-2xl sm:text-3xl font-black font-mono tracking-tight ${variantStyles.amountColor}`}>
+      <div className="mt-2 sm:mt-4">
+        <div className={`text-base sm:text-2xl lg:text-3xl font-black font-mono tracking-tight ${variantStyles.amountColor} truncate`}>
           {formatINR(amount)}
         </div>
         {(subtitle || badge) && (
-          <div className="mt-2.5 flex items-center justify-between text-xs text-zinc-400">
-            {subtitle && <span>{subtitle}</span>}
+          <div className="mt-1.5 sm:mt-2.5 flex items-center justify-between text-[10px] sm:text-xs text-zinc-400">
+            {subtitle && <span className="truncate pr-1 text-zinc-500 hidden sm:inline">{subtitle}</span>}
             {badge && (
-              <span className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${variantStyles.badgeColor}`}>
+              <span className={`px-1.5 py-0.5 rounded-full border text-[9px] sm:text-[10px] font-semibold ${variantStyles.badgeColor} ml-auto`}>
                 {badge}
               </span>
             )}
