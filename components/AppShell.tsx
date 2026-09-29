@@ -18,18 +18,22 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     try {
-      const unlocked = sessionStorage.getItem("rupeepulse_unlocked") === "true";
+      const unlocked =
+        sessionStorage.getItem("rupeepulse_unlocked") === "true" ||
+        localStorage.getItem("rupeepulse_unlocked") === "true";
       const lastActiveStr =
         localStorage.getItem("rupeepulse_last_active") ||
         sessionStorage.getItem("rupeepulse_last_active");
       const lastActive = Number(lastActiveStr || 0);
       const now = Date.now();
 
-      // If already unlocked and user was active within last 2.5 min, remain unlocked across reloads
-      if (unlocked && lastActive && now - lastActive < INACTIVITY_TIMEOUT_MS) {
-        localStorage.setItem("rupeepulse_last_active", now.toString());
-        sessionStorage.setItem("rupeepulse_last_active", now.toString());
-        return true;
+      // If unlocked: if freshly unlocked or user was active within last 2.5 min, remain unlocked
+      if (unlocked) {
+        if (!lastActive || now - lastActive < INACTIVITY_TIMEOUT_MS) {
+          localStorage.setItem("rupeepulse_last_active", now.toString());
+          sessionStorage.setItem("rupeepulse_last_active", now.toString());
+          return true;
+        }
       }
     } catch {
       // fallback
@@ -44,10 +48,43 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   const isAuthPage = pathname === "/login";
 
+  // Listen for vault_unlocked event from login page or biometric/PIN unlock
+  useEffect(() => {
+    const handleVaultUnlocked = () => {
+      setIsUnlocked(true);
+    };
+    window.addEventListener("vault_unlocked", handleVaultUnlocked);
+    return () => {
+      window.removeEventListener("vault_unlocked", handleVaultUnlocked);
+    };
+  }, []);
+
+  // When pathname transitions (e.g. from /login to /), synchronize unlock status
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const unlocked =
+        sessionStorage.getItem("rupeepulse_unlocked") === "true" ||
+        localStorage.getItem("rupeepulse_unlocked") === "true";
+      const lastActiveStr =
+        localStorage.getItem("rupeepulse_last_active") ||
+        sessionStorage.getItem("rupeepulse_last_active");
+      const lastActive = Number(lastActiveStr || 0);
+      const now = Date.now();
+
+      if (unlocked && (!lastActive || now - lastActive < INACTIVITY_TIMEOUT_MS)) {
+        setIsUnlocked(true);
+      }
+    } catch {
+      // fallback
+    }
+  }, [pathname]);
+
   const handleLock = useCallback(() => {
     setIsUnlocked(false);
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("rupeepulse_unlocked");
+      localStorage.removeItem("rupeepulse_unlocked");
       localStorage.removeItem("rupeepulse_last_active");
       sessionStorage.removeItem("rupeepulse_last_active");
     }
@@ -57,6 +94,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     const now = Date.now();
     if (typeof window !== "undefined") {
       sessionStorage.setItem("rupeepulse_unlocked", "true");
+      localStorage.setItem("rupeepulse_unlocked", "true");
       localStorage.setItem("rupeepulse_last_active", now.toString());
       sessionStorage.setItem("rupeepulse_last_active", now.toString());
     }

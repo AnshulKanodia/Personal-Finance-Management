@@ -44,6 +44,7 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
         return;
       } else {
         localStorage.removeItem("rupeepulse_biometric_token");
+        localStorage.removeItem("rupeepulse_webauthn_id");
         update({ biometricEnabled: false });
         return;
       }
@@ -73,7 +74,12 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
         return;
       }
 
-      await enrollBiometrics();
+      const enrollResult = await enrollBiometrics();
+      if (!enrollResult.success) {
+        setEnrollError(enrollResult.error || "Device biometric registration was cancelled or failed");
+        return;
+      }
+
       localStorage.setItem("rupeepulse_biometric_token", data.biometricToken);
       update({ biometricEnabled: true });
       setEnrollingBiometric(false);
@@ -89,8 +95,8 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-3xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden max-h-[85vh] sm:max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between bg-zinc-900/40">
           <div className="flex items-center gap-3">
@@ -295,9 +301,9 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
                   <Eye className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-zinc-100">Stealth Mode (Privacy Blur)</div>
+                  <div className="text-sm font-semibold text-zinc-100">Stealth Mode (Pixelate Mask)</div>
                   <div className="text-[11px] text-zinc-400">
-                    Mask balances with a privacy blur in public or when screen sharing
+                    Mask balances with digital pixelated blocks (■■■■■) in public or when screen sharing
                   </div>
                 </div>
               </div>
@@ -397,15 +403,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
         )}
 
         {/* Footer */}
-        <div className="p-4 border-t border-zinc-850 flex items-center justify-between bg-zinc-900/30 text-xs">
+        <div className="p-4 sm:p-5 pb-6 sm:pb-5 border-t border-zinc-850 flex items-center justify-between bg-zinc-900/40 text-xs">
           <div className="text-zinc-500 flex items-center gap-1.5">
             <Check className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Preferences saved automatically</span>
+            <span>Preferences saved</span>
           </div>
 
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all active:scale-95 shadow-sm"
+            className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all active:scale-95 shadow-md shadow-emerald-500/20"
           >
             Done
           </button>

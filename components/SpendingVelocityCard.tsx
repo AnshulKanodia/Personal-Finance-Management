@@ -96,27 +96,27 @@ export const SpendingVelocityCard: React.FC<SpendingVelocityProps> = ({ velocity
       <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
       {/* Header with Switcher */}
-      <div className="flex items-center justify-between gap-2 mb-3.5">
-        <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-emerald-400 shadow-inner">
+      <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-3 mb-3.5">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-emerald-400 shadow-inner flex-shrink-0">
             <Gauge className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <div>
-            <h3 className="text-xs sm:text-sm font-bold text-zinc-100 flex items-center gap-2">
+          <div className="min-w-0">
+            <h3 className="text-xs sm:text-sm font-bold text-zinc-100 flex flex-wrap items-center gap-1.5 sm:gap-2">
               <span>Spending Velocity</span>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-mono font-medium flex items-center gap-1 ${paceConfig.bg} ${paceConfig.color}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full border font-mono font-medium flex items-center gap-1 whitespace-nowrap flex-shrink-0 ${paceConfig.bg} ${paceConfig.color}`}>
                 <Icon className="w-3 h-3 stroke-[2.5]" />
                 {paceConfig.label}
               </span>
             </h3>
-            <p className="text-[11px] text-zinc-400 mt-0.5">
+            <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
               {paceConfig.subtext}
             </p>
           </div>
         </div>
 
         {/* Period Switcher Button Group */}
-        <div className="flex items-center bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 text-[11px] font-medium flex-shrink-0">
+        <div className="flex items-center bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 text-[11px] font-medium flex-shrink-0 self-end sm:self-auto">
           <button
             onClick={() => handlePeriodToggle("WEEKLY")}
             className={`px-2.5 py-1 rounded-lg transition-all ${
@@ -146,10 +146,10 @@ export const SpendingVelocityCard: React.FC<SpendingVelocityProps> = ({ velocity
         <div className="p-3 rounded-xl bg-zinc-900/50 border border-zinc-800/80">
           <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono flex items-center gap-1">
             <Flame className="w-3 h-3 text-amber-400" />
-            <span>Daily Burn</span>
+            <span>{isWeekly ? "Daily Burn (Week)" : "Daily Burn (Month)"}</span>
           </div>
           <div className="text-base sm:text-lg font-black font-mono text-zinc-100 mt-1">
-            <PrivacyMask>₹{formatINR(currentData.burnRatePerDay)}</PrivacyMask>
+            <PrivacyMask>{formatINR(currentData.burnRatePerDay)}</PrivacyMask>
             <span className="text-[10px] text-zinc-500 font-normal font-sans ml-1">/ day</span>
           </div>
         </div>
@@ -161,7 +161,7 @@ export const SpendingVelocityCard: React.FC<SpendingVelocityProps> = ({ velocity
             <span>{isWeekly ? "This Week" : "This Month"}</span>
           </div>
           <div className="text-base sm:text-lg font-black font-mono text-zinc-100 mt-1">
-            <PrivacyMask>₹{formatINR(currentData.currentSpend)}</PrivacyMask>
+            <PrivacyMask>{formatINR(currentData.currentSpend)}</PrivacyMask>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ export const SpendingVelocityCard: React.FC<SpendingVelocityProps> = ({ velocity
             <span>{isWeekly ? "Prior Week Benchmark" : "Prior Month"}</span>
           </div>
           <div className="text-base sm:text-lg font-black font-mono text-zinc-400 mt-1">
-            <PrivacyMask>₹{formatINR(currentData.previousSpend)}</PrivacyMask>
+            <PrivacyMask>{formatINR(currentData.previousSpend)}</PrivacyMask>
           </div>
         </div>
       </div>

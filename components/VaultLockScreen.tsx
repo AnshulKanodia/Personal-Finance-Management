@@ -61,6 +61,13 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
         return;
       }
 
+      localStorage.setItem("rupeepulse_unlocked", "true");
+      sessionStorage.setItem("rupeepulse_unlocked", "true");
+      const now = Date.now().toString();
+      localStorage.setItem("rupeepulse_last_active", now);
+      sessionStorage.setItem("rupeepulse_last_active", now);
+      window.dispatchEvent(new Event("vault_unlocked"));
+
       setIsSuccess(true);
       setTimeout(() => {
         onUnlock();
@@ -77,7 +84,8 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
     isBiometricsAvailable().then((avail) => {
       const prefs = getPreferences();
       const token = localStorage.getItem("rupeepulse_biometric_token");
-      if (avail && (prefs.biometricEnabled || token)) {
+      const webauthnId = localStorage.getItem("rupeepulse_webauthn_id");
+      if (avail && prefs.biometricEnabled && (token || webauthnId)) {
         setHasBiometric(true);
       }
     });
@@ -105,6 +113,13 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
         setError(data.message || "Please enter 6-digit PIN to authenticate");
         return;
       }
+
+      localStorage.setItem("rupeepulse_unlocked", "true");
+      sessionStorage.setItem("rupeepulse_unlocked", "true");
+      const now = Date.now().toString();
+      localStorage.setItem("rupeepulse_last_active", now);
+      sessionStorage.setItem("rupeepulse_last_active", now);
+      window.dispatchEvent(new Event("vault_unlocked"));
 
       setIsSuccess(true);
       setTimeout(() => {

@@ -251,7 +251,12 @@ export async function GET(req: NextRequest) {
     const weeklyPace: "SLOWER" | "STEADY" | "FASTER" =
       weeklyChangePercent < -5 ? "SLOWER" : weeklyChangePercent > 5 ? "FASTER" : "STEADY";
 
-    const daysPassedInMonth = Math.max(1, now.getDate());
+    const isCurrentMonthView =
+      !monthParam ||
+      monthParam === `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const daysPassedInMonth = isCurrentMonthView
+      ? Math.max(1, now.getDate())
+      : endOfMonth.getDate();
     const monthlyBurnPerDay = Math.round(totalSpendThisMonth / daysPassedInMonth);
     let monthlyChangePercent = 0;
     if (lastMonthSpend > 0) {

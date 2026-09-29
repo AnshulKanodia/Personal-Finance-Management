@@ -20,6 +20,12 @@ function LoginForm() {
       .then((res) => res.json())
       .then((data) => {
         if (data.authenticated) {
+          const now = Date.now().toString();
+          sessionStorage.setItem("rupeepulse_unlocked", "true");
+          localStorage.setItem("rupeepulse_unlocked", "true");
+          sessionStorage.setItem("rupeepulse_last_active", now);
+          localStorage.setItem("rupeepulse_last_active", now);
+          window.dispatchEvent(new Event("vault_unlocked"));
           router.replace(redirectFrom);
         }
       })
@@ -67,10 +73,12 @@ function LoginForm() {
         return;
       }
 
-      const now = Date.now();
+      const now = Date.now().toString();
       sessionStorage.setItem("rupeepulse_unlocked", "true");
-      sessionStorage.setItem("rupeepulse_last_active", now.toString());
-      localStorage.setItem("rupeepulse_last_active", now.toString());
+      localStorage.setItem("rupeepulse_unlocked", "true");
+      sessionStorage.setItem("rupeepulse_last_active", now);
+      localStorage.setItem("rupeepulse_last_active", now);
+      window.dispatchEvent(new Event("vault_unlocked"));
 
       router.replace(redirectFrom);
       router.refresh();
