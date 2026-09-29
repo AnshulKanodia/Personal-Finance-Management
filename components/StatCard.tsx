@@ -1,6 +1,7 @@
 import React from "react";
 import { formatINR } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { PrivacyMask } from "@/components/PrivacyMask";
 
 interface StatCardProps {
   title: string;
@@ -75,7 +76,7 @@ export const StatCard: React.FC<StatCardProps> = ({
 
       <div className="mt-2 sm:mt-4">
         <div className={`text-base sm:text-2xl lg:text-3xl font-black font-mono tracking-tight ${variantStyles.amountColor} truncate`}>
-          {formatINR(amount)}
+          <PrivacyMask>{formatINR(amount)}</PrivacyMask>
         </div>
         {(subtitle || badge) && (
           <div className="mt-1.5 sm:mt-2.5 flex items-center justify-between text-[10px] sm:text-xs text-zinc-400">

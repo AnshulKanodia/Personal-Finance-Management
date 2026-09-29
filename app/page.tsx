@@ -27,6 +27,9 @@ import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { EditTransactionModal } from "@/components/EditTransactionModal";
 import { RupeeLoader } from "@/components/RupeeLoader";
+import { SpendingVelocityCard } from "@/components/SpendingVelocityCard";
+import { PrivacyMask } from "@/components/PrivacyMask";
+import { usePreferences } from "@/lib/preferences";
 
 import { getCached, setCached } from "@/lib/clientCache";
 
@@ -39,6 +42,10 @@ interface DashboardData {
   categorySpend: any[];
   paymentModes: any[];
   recentTransactions: any[];
+  velocity?: {
+    weekly: any;
+    monthly: any;
+  };
   month: string;
 }
 
@@ -53,9 +60,23 @@ export default function DashboardPage() {
   );
   const [loading, setLoading] = useState(() => !data);
 
+  const { prefs } = usePreferences();
   const [quickAddType, setQuickAddType] = useState<"EXPENSE" | "INCOME" | null>(null);
   const [quickDueOpen, setQuickDueOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<any | null>(null);
+
+  // Handle PWA Home Screen Shortcuts (?action=expense or ?action=income)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get("action");
+      if (action === "expense") {
+        setQuickAddType("EXPENSE");
+      } else if (action === "income") {
+        setQuickAddType("INCOME");
+      }
+    }
+  }, []);
 
   const fetchDashboard = useCallback(async (isSilent = false) => {
     try {
@@ -120,7 +141,7 @@ export default function DashboardPage() {
             Financial Overview
           </h1>
           <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-            Tracking INR expenses, liquid cash, and friend splits
+            Tracking expenses, liquid cash, and friend splits
           </p>
         </div>
 
@@ -196,167 +217,188 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Spending Velocity Gauge (Customizable Widget) */}
+      {prefs.showSpendingVelocity && data?.velocity && (
+        <SpendingVelocityCard velocity={data.velocity} />
+      )}
+
       {/* Middle Section: Spend Donut Chart + Payment Modes Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Category Chart (takes 2 columns) */}
-        <div className="lg:col-span-2">
-          <SpendCategoryChart data={data?.categorySpend || []} />
-        </div>
-
-        {/* Payment Modes Summary */}
-        <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
-                Payment Channels
-              </h3>
-              <span className="text-[10px] text-zinc-500 font-mono">This Month</span>
+      {(prefs.showCategoryChart || prefs.showPaymentChannels) && (
+        <div
+          className={`grid grid-cols-1 ${
+            prefs.showCategoryChart && prefs.showPaymentChannels
+              ? "lg:grid-cols-3"
+              : "grid-cols-1"
+          } gap-6`}
+        >
+          {/* Category Chart */}
+          {prefs.showCategoryChart && (
+            <div className={prefs.showPaymentChannels ? "lg:col-span-2" : "col-span-1"}>
+              <SpendCategoryChart data={data?.categorySpend || []} />
             </div>
+          )}
 
-            <div className="space-y-3">
-              {[
-                {
-                  id: "UPI",
-                  label: "UPI Payments",
-                  icon: Send,
-                  border: "border-sky-500/20",
-                  text: "text-sky-400",
-                  bg: "bg-sky-500/10",
-                },
-                {
-                  id: "CASH",
-                  label: "Cash Payments",
-                  icon: Coins,
-                  border: "border-amber-500/20",
-                  text: "text-amber-400",
-                  bg: "bg-amber-500/10",
-                },
-                {
-                  id: "CARD",
-                  label: "Card / Net Banking",
-                  icon: CreditCard,
-                  border: "border-violet-500/20",
-                  text: "text-violet-400",
-                  bg: "bg-violet-500/10",
-                },
-              ].map((channel) => {
-                const Icon = channel.icon;
-                const expense =
-                  data?.paymentModes.find(
-                    (p) => p._id.mode === channel.id && p._id.type === "EXPENSE"
-                  )?.total || 0;
+          {/* Payment Modes Summary */}
+          {prefs.showPaymentChannels && (
+            <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
+                    Payment Channels
+                  </h3>
+                  <span className="text-[10px] text-zinc-500 font-mono">This Month</span>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    {
+                      id: "UPI",
+                      label: "UPI Payments",
+                      icon: Send,
+                      border: "border-sky-500/20",
+                      text: "text-sky-400",
+                      bg: "bg-sky-500/10",
+                    },
+                    {
+                      id: "CASH",
+                      label: "Cash Payments",
+                      icon: Coins,
+                      border: "border-amber-500/20",
+                      text: "text-amber-400",
+                      bg: "bg-amber-500/10",
+                    },
+                    {
+                      id: "CARD",
+                      label: "Card / Net Banking",
+                      icon: CreditCard,
+                      border: "border-violet-500/20",
+                      text: "text-violet-400",
+                      bg: "bg-violet-500/10",
+                    },
+                  ].map((channel) => {
+                    const Icon = channel.icon;
+                    const expense =
+                      data?.paymentModes.find(
+                        (p) => p._id.mode === channel.id && p._id.type === "EXPENSE"
+                      )?.total || 0;
+
+                    return (
+                      <div
+                        key={channel.id}
+                        className={`p-3.5 rounded-xl bg-zinc-950/60 border ${channel.border} flex items-center justify-between`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-lg ${channel.bg} ${channel.text}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-zinc-200">{channel.label}</div>
+                            <div className="text-[10px] text-zinc-500">Spend Outflow</div>
+                          </div>
+                        </div>
+                        <div className={`text-sm font-bold font-mono ${channel.text}`}>
+                          <PrivacyMask>{formatINR(expense)}</PrivacyMask>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs">
+                <span className="text-zinc-400">Total Income This Month</span>
+                <span className="font-bold text-emerald-400 font-mono">
+                  <PrivacyMask>+{formatINR(data?.totalIncomeThisMonth ?? 0)}</PrivacyMask>
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bottom Section: Recent Transactions */}
+      {prefs.showRecentTransactions && (
+        <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
+                Recent Transactions
+              </h3>
+              <p className="text-xs text-zinc-500">Latest 5 entries across categories</p>
+            </div>
+            <Link
+              href="/transactions"
+              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 hover:underline"
+            >
+              <span>View All</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {data?.recentTransactions && data.recentTransactions.length > 0 ? (
+            <div className="divide-y divide-zinc-850">
+              {data.recentTransactions.slice(0, 5).map((tx: any) => {
+                const isExpense = tx.type === "EXPENSE";
+                const cat = tx.category || { name: "General", color: "#71717a", icon: "Tag" };
 
                 return (
                   <div
-                    key={channel.id}
-                    className={`p-3.5 rounded-xl bg-zinc-950/60 border ${channel.border} flex items-center justify-between`}
+                    key={tx._id}
+                    className="py-3.5 flex items-center justify-between group hover:bg-zinc-900/40 px-2 rounded-xl transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${channel.bg} ${channel.text}`}>
-                        <Icon className="w-4 h-4" />
+                      <div className="p-2.5 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 flex items-center justify-center">
+                        <CategoryIcon name={cat.icon} className="w-4 h-4 text-zinc-300" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-zinc-200">{channel.label}</div>
-                        <div className="text-[10px] text-zinc-500">Spend Outflow</div>
+                        <div className="text-sm font-semibold text-zinc-200">
+                          {tx.notes || cat.name}
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-zinc-500 mt-0.5">
+                          <span>{formatDate(tx.date)}</span>
+                          <span>•</span>
+                          <span className="px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 text-[10px] font-mono">
+                            {tx.paymentMode}
+                          </span>
+                          {tx.notes && <span>• {cat.name}</span>}
+                        </div>
                       </div>
                     </div>
-                    <div className={`text-sm font-bold font-mono ${channel.text}`}>
-                      {formatINR(expense)}
+
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <div
+                          className={`text-sm sm:text-base font-bold font-mono ${
+                            isExpense ? "text-rose-400" : "text-emerald-400"
+                          }`}
+                        >
+                          <PrivacyMask>
+                            {isExpense ? "-" : "+"}
+                            {formatINR(tx.amount)}
+                          </PrivacyMask>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => setEditingTransaction(tx)}
+                        className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors opacity-70 group-hover:opacity-100"
+                        title="Edit transaction"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-            <span className="text-zinc-400">Total Income This Month</span>
-            <span className="font-bold text-emerald-400 font-mono">
-              +{formatINR(data?.totalIncomeThisMonth ?? 0)}
-            </span>
-          </div>
+          ) : (
+            <div className="text-center py-10">
+              <IndianRupee className="w-10 h-10 text-zinc-600 mx-auto mb-2 stroke-[2]" />
+              <p className="text-sm text-zinc-400">No transactions recorded yet</p>
+            </div>
+          )}
         </div>
-      </div>
-
-      {/* Bottom Section: Recent Transactions */}
-      <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
-              Recent Transactions
-            </h3>
-            <p className="text-xs text-zinc-500">Latest 5 entries across categories</p>
-          </div>
-          <Link
-            href="/transactions"
-            className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 hover:underline"
-          >
-            <span>View All</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        {data?.recentTransactions && data.recentTransactions.length > 0 ? (
-          <div className="divide-y divide-zinc-850">
-            {data.recentTransactions.slice(0, 5).map((tx: any) => {
-              const isExpense = tx.type === "EXPENSE";
-              const cat = tx.category || { name: "General", color: "#71717a", icon: "Tag" };
-
-              return (
-                <div
-                  key={tx._id}
-                  className="py-3.5 flex items-center justify-between group hover:bg-zinc-900/40 px-2 rounded-xl transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-300 flex items-center justify-center">
-                      <CategoryIcon name={cat.icon} className="w-4 h-4 text-zinc-300" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-zinc-200">
-                        {tx.notes || cat.name}
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-zinc-500 mt-0.5">
-                        <span>{formatDate(tx.date)}</span>
-                        <span>•</span>
-                        <span className="px-1.5 py-0.2 rounded bg-zinc-800/80 text-zinc-400 text-[10px] font-mono">
-                          {tx.paymentMode}
-                        </span>
-                        {tx.notes && <span>• {cat.name}</span>}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div
-                        className={`text-sm sm:text-base font-bold font-mono ${
-                          isExpense ? "text-rose-400" : "text-emerald-400"
-                        }`}
-                      >
-                        {isExpense ? "-" : "+"}
-                        {formatINR(tx.amount)}
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => setEditingTransaction(tx)}
-                      className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors opacity-70 group-hover:opacity-100"
-                      title="Edit transaction"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center py-10">
-            <IndianRupee className="w-10 h-10 text-zinc-600 mx-auto mb-2 stroke-[2]" />
-            <p className="text-sm text-zinc-400">No transactions recorded yet</p>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Modals */}
       <QuickTransactionModal

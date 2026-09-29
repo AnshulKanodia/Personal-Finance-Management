@@ -21,6 +21,8 @@ import { formatINR, formatDate } from "@/lib/utils";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { SettleUpModal } from "@/components/SettleUpModal";
 import { RupeeLoader } from "@/components/RupeeLoader";
+import { TripManager } from "@/components/TripManager";
+import { PrivacyMask } from "@/components/PrivacyMask";
 
 import { getCached, setCached } from "@/lib/clientCache";
 
@@ -56,7 +58,7 @@ export default function LedgerPage() {
   const [activeDues, setActiveDues] = useState<DueItem[]>(() => getCached<DueItem[]>("ledger_active_dues") || []);
   const [settledDues, setSettledDues] = useState<DueItem[]>(() => getCached<DueItem[]>("ledger_settled_dues") || []);
   const [loading, setLoading] = useState(() => friends.length === 0);
-  const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY">("ACTIVE");
+  const [activeTab, setActiveTab] = useState<"ACTIVE" | "HISTORY" | "GROUPS">("ACTIVE");
   const [historyFriendFilter, setHistoryFriendFilter] = useState<string>("ALL");
 
   // Modals
@@ -191,7 +193,7 @@ export default function LedgerPage() {
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-emerald-400 mt-3 font-mono">
-            +{formatINR(totalToTake)}
+            <PrivacyMask>+{formatINR(totalToTake)}</PrivacyMask>
           </div>
           <p className="text-xs text-zinc-500 mt-1">Net money friends owe you</p>
         </div>
@@ -206,7 +208,7 @@ export default function LedgerPage() {
             </div>
           </div>
           <div className="text-2xl sm:text-3xl font-black text-rose-400 mt-3 font-mono">
-            -{formatINR(totalToGive)}
+            <PrivacyMask>-{formatINR(totalToGive)}</PrivacyMask>
           </div>
           <p className="text-xs text-zinc-500 mt-1">Net money you owe friends</p>
         </div>
@@ -225,8 +227,10 @@ export default function LedgerPage() {
               netPosition >= 0 ? "text-emerald-400" : "text-rose-400"
             }`}
           >
-            {netPosition >= 0 ? "+" : ""}
-            {formatINR(netPosition)}
+            <PrivacyMask>
+              {netPosition >= 0 ? "+" : ""}
+              {formatINR(netPosition)}
+            </PrivacyMask>
           </div>
           <p className="text-xs text-zinc-500 mt-1">Single overall balance</p>
         </div>
@@ -253,6 +257,16 @@ export default function LedgerPage() {
           }`}
         >
           Settled History ({settledDues.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("GROUPS")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            activeTab === "GROUPS"
+              ? "bg-zinc-800 text-sky-400 border border-zinc-700 shadow-inner"
+              : "text-zinc-500 hover:text-zinc-300"
+          }`}
+        >
+          Trips & Groups
         </button>
       </div>
 
@@ -593,7 +607,7 @@ export default function LedgerPage() {
             )}
           </div>
         </div>
-      ) : (
+      ) : activeTab === "HISTORY" ? (
         /* Settled History Tab - Revamped for high visibility */
         <div className="space-y-4">
           {/* History Header & Summary Banner */}
@@ -728,6 +742,8 @@ export default function LedgerPage() {
             )}
           </div>
         </div>
+      ) : (
+        <TripManager existingFriends={friends} onRefresh={fetchData} />
       )}
 
       {/* Quick Due Modal */}

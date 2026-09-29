@@ -23,10 +23,12 @@ import {
   FileSpreadsheet,
   FileText,
   Calendar,
+  Sliders,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { clearCache, getCached, setCached } from "@/lib/clientCache";
 import { DownloadStatementModal } from "@/components/DownloadStatementModal";
+import { DashboardSettingsModal } from "@/components/DashboardSettingsModal";
 
 interface Friend {
   _id: string;
@@ -69,6 +71,7 @@ export default function ProfilePage() {
   const [submittingFriend, setSubmittingFriend] = useState<boolean>(false);
   const [friendError, setFriendError] = useState<string>("");
   const [statementOpen, setStatementOpen] = useState<boolean>(false);
+  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [categories, setCategories] = useState<Category[]>(() => getCached<Category[]>("all_categories") || []);
 
   useEffect(() => {
@@ -279,6 +282,14 @@ export default function ProfilePage() {
             </button>
 
             <button
+              onClick={() => setSettingsOpen(true)}
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+            >
+              <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Settings</span>
+            </button>
+
+            <button
               onClick={handleLockVault}
               className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
               title="Lock vault immediately"
@@ -312,6 +323,27 @@ export default function ProfilePage() {
           </div>
           <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
         </Link>
+
+        {/* Customize Dashboard Option */}
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between text-left cursor-pointer"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 group-hover:scale-105 transition-transform">
+              <Sliders className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
+                Customize Dashboard
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Configure spending velocity, category charts, payment modes, stealth mode, and biometric lock
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
+        </button>
 
         {/* Security & PIN Settings */}
         <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start justify-between">
@@ -606,6 +638,12 @@ export default function ProfilePage() {
         isOpen={statementOpen}
         onClose={() => setStatementOpen(false)}
         categories={categories}
+      />
+
+      {/* Dashboard Settings & Preferences Modal */}
+      <DashboardSettingsModal
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );

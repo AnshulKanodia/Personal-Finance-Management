@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Lock, Unlock, IndianRupee, Delete, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { Lock, Unlock, IndianRupee, Delete, ArrowRight, ShieldCheck, Sparkles, Fingerprint } from "lucide-react";
 
 import { Starfield } from "./Starfield";
+import { isBiometricsAvailable, promptBiometricAuth } from "@/lib/webauthn";
+import { getPreferences } from "@/lib/preferences";
 
 interface VaultLockScreenProps {
   onUnlock: () => void;
@@ -14,6 +16,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [hasBiometric, setHasBiometric] = useState<boolean>(false);
 
   const handleDigit = (digit: string) => {
     if (loading || isSuccess) return;
@@ -65,6 +68,50 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
     } catch (err: any) {
       setError(err.message || "Failed to verify PIN");
       setPin("");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    isBiometricsAvailable().then((avail) => {
+      const prefs = getPreferences();
+      const token = localStorage.getItem("rupeepulse_biometric_token");
+      if (avail && (prefs.biometricEnabled || token)) {
+        setHasBiometric(true);
+      }
+    });
+  }, []);
+
+  const handleBiometricUnlock = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const passed = await promptBiometricAuth();
+      if (!passed) {
+        setError("Biometric verification cancelled or unavailable");
+        return;
+      }
+
+      const token = localStorage.getItem("rupeepulse_biometric_token");
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ biometricToken: token || "local_biometric_auth" }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || "Please enter 6-digit PIN to authenticate");
+        return;
+      }
+
+      setIsSuccess(true);
+      setTimeout(() => {
+        onUnlock();
+      }, 400);
+    } catch (err: any) {
+      setError(err.message || "Biometric unlock failed");
     } finally {
       setLoading(false);
     }
@@ -191,6 +238,19 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
               <Delete className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
+
+          {/* Biometric Quick Unlock Option */}
+          {hasBiometric && (
+            <button
+              type="button"
+              onClick={handleBiometricUnlock}
+              disabled={loading || isSuccess}
+              className="w-full max-w-[280px] sm:max-w-[320px] mt-3 py-3 rounded-2xl bg-zinc-900 hover:bg-zinc-850 border border-emerald-500/30 text-emerald-400 hover:text-emerald-300 font-semibold text-xs transition-all flex items-center justify-center gap-2 active:scale-95 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
+            >
+              <Fingerprint className="w-4 h-4 stroke-[2.2]" />
+              <span>Unlock with Biometrics (Fingerprint / FaceID)</span>
+            </button>
+          )}
 
           <div className="mt-4 sm:mt-5 text-center">
             <span className="text-[11px] text-zinc-500 flex items-center justify-center gap-1">

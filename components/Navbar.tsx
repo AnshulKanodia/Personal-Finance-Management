@@ -13,7 +13,10 @@ import {
   LogOut,
   IndianRupee,
   User,
+  Eye,
+  EyeOff,
 } from "lucide-react";
+import { usePreferences } from "@/lib/preferences";
 
 interface NavbarProps {
   onOpenQuickAdd?: () => void;
@@ -24,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  const { prefs, toggleStealth } = usePreferences();
 
   // Do not render Navbar on login page
   if (pathname === "/login") return null;
@@ -104,6 +108,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
               <span>Add Transaction</span>
             </button>
           )}
+
+          {/* Stealth Mode Quick Toggle */}
+          <button
+            onClick={toggleStealth}
+            title={
+              prefs.stealthMode
+                ? "Stealth Mode Active (Balances Hidden) • Click to reveal"
+                : "Stealth Mode Inactive • Click to hide sensitive numbers"
+            }
+            className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
+              prefs.stealthMode
+                ? "border-teal-500/50 bg-teal-500/10 text-teal-400 shadow-[0_0_12px_rgba(20,184,166,0.2)]"
+                : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
+            }`}
+          >
+            {prefs.stealthMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
 
           <button
             onClick={handleLogout}

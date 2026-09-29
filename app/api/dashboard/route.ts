@@ -31,7 +31,20 @@ export async function GET(req: NextRequest) {
       endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     }
 
-    // Run all 6 aggregations concurrently in parallel for maximum speed (sub-second load)
+    // Velocity calculation boundaries (Weekly & Monthly)
+    const dayOfWeek = (now.getDay() + 6) % 7; // Monday = 0, Sunday = 6
+    const startOfCurrentWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayOfWeek, 0, 0, 0, 0);
+    const endOfCurrentWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+    const startOfLastWeek = new Date(startOfCurrentWeek);
+    startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+    const endOfLastWeekSameDay = new Date(endOfCurrentWeek);
+    endOfLastWeekSameDay.setDate(endOfLastWeekSameDay.getDate() - 7);
+
+    const startOfLastMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth(), 0, 23, 59, 59, 999);
+
+    // Run aggregations concurrently in parallel for maximum speed
     const [
       monthlyTotals,
       allTimeTotals,
@@ -39,6 +52,9 @@ export async function GET(req: NextRequest) {
       categorySpendAggregation,
       paymentModeAggregation,
       recentTransactions,
+      thisWeekExpenses,
+      lastWeekExpenses,
+      lastMonthExpenses,
     ] = await Promise.all([
       // 1. Total Spend and Income this month
       Transaction.aggregate([
@@ -138,6 +154,54 @@ export async function GET(req: NextRequest) {
         .sort({ date: -1, createdAt: -1 })
         .limit(5)
         .lean(),
+
+      // 7. This week expenses
+      Transaction.aggregate([
+        {
+          $match: {
+            type: "EXPENSE",
+            date: { $gte: startOfCurrentWeek, $lte: endOfCurrentWeek },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      // 8. Last week expenses (same days comparison)
+      Transaction.aggregate([
+        {
+          $match: {
+            type: "EXPENSE",
+            date: { $gte: startOfLastWeek, $lte: endOfLastWeekSameDay },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
+
+      // 9. Last month full expenses
+      Transaction.aggregate([
+        {
+          $match: {
+            type: "EXPENSE",
+            date: { $gte: startOfLastMonth, $lte: endOfLastMonth },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+          },
+        },
+      ]),
     ]);
 
     let totalSpendThisMonth = 0;
@@ -173,6 +237,29 @@ export async function GET(req: NextRequest) {
       if (net < 0) netIOwe += Math.abs(net);
     });
 
+    // Velocity calculations
+    const currentWeekSpend = thisWeekExpenses[0]?.total || 0;
+    const lastWeekSpend = lastWeekExpenses[0]?.total || 0;
+    const lastMonthSpend = lastMonthExpenses[0]?.total || 0;
+
+    const daysPassedInWeek = Math.max(1, dayOfWeek + 1);
+    const weeklyBurnPerDay = Math.round(currentWeekSpend / daysPassedInWeek);
+    let weeklyChangePercent = 0;
+    if (lastWeekSpend > 0) {
+      weeklyChangePercent = Math.round(((currentWeekSpend - lastWeekSpend) / lastWeekSpend) * 100);
+    }
+    const weeklyPace: "SLOWER" | "STEADY" | "FASTER" =
+      weeklyChangePercent < -5 ? "SLOWER" : weeklyChangePercent > 5 ? "FASTER" : "STEADY";
+
+    const daysPassedInMonth = Math.max(1, now.getDate());
+    const monthlyBurnPerDay = Math.round(totalSpendThisMonth / daysPassedInMonth);
+    let monthlyChangePercent = 0;
+    if (lastMonthSpend > 0) {
+      monthlyChangePercent = Math.round(((totalSpendThisMonth - lastMonthSpend) / lastMonthSpend) * 100);
+    }
+    const monthlyPace: "SLOWER" | "STEADY" | "FASTER" =
+      monthlyChangePercent < -5 ? "SLOWER" : monthlyChangePercent > 5 ? "FASTER" : "STEADY";
+
     return NextResponse.json({
       success: true,
       data: {
@@ -184,6 +271,22 @@ export async function GET(req: NextRequest) {
         categorySpend: categorySpendAggregation,
         paymentModes: paymentModeAggregation,
         recentTransactions,
+        velocity: {
+          weekly: {
+            currentSpend: currentWeekSpend,
+            previousSpend: lastWeekSpend,
+            changePercent: weeklyChangePercent,
+            burnRatePerDay: weeklyBurnPerDay,
+            pace: weeklyPace,
+          },
+          monthly: {
+            currentSpend: totalSpendThisMonth,
+            previousSpend: lastMonthSpend,
+            changePercent: monthlyChangePercent,
+            burnRatePerDay: monthlyBurnPerDay,
+            pace: monthlyPace,
+          },
+        },
         month: monthParam || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
       },
     });

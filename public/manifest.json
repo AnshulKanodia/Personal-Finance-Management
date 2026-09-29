@@ -26,5 +26,46 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Log Expense",
+      "short_name": "Expense",
+      "description": "Quickly record a new expense",
+      "url": "/?action=expense",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Add Income",
+      "short_name": "Income",
+      "description": "Record income or salary",
+      "url": "/?action=income",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Friends Ledger",
+      "short_name": "Ledger",
+      "description": "View friend dues and settle up",
+      "url": "/ledger",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
