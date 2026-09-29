@@ -493,7 +493,7 @@ export default function ProfilePage() {
                   type="text"
                   value={editUsername}
                   onChange={(e) => setEditUsername(e.target.value)}
-                  placeholder="e.g. Vault Owner or Anshul"
+                  placeholder="e.g. Vault Owner or Alex"
                   className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-emerald-500"
                   required
                   autoFocus
