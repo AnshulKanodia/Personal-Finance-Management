@@ -264,34 +264,18 @@ export default function ProfilePage() {
           </div>
 
           {/* Action buttons on mobile & desktop */}
-          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end pt-3 sm:pt-0 border-t border-zinc-850 sm:border-0">
-            <button
-              onClick={() => setStatementOpen(true)}
-              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Statement</span>
-            </button>
-
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end pt-3 sm:pt-0 border-t border-zinc-850 sm:border-0">
             <button
               onClick={handleOpenEditProfile}
-              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Edit Profile</span>
             </button>
 
             <button
-              onClick={() => setSettingsOpen(true)}
-              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
-            >
-              <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Settings</span>
-            </button>
-
-            <button
               onClick={handleLockVault}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
               title="Lock vault immediately"
             >
               <Lock className="w-3.5 h-3.5" />
@@ -301,113 +285,50 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Grid of Sections: Category Manager & Security */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Category Manager Option */}
-        <Link
-          href="/categories"
-          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between"
-        >
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform">
-              <Tags className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
-                Category Manager
-              </h3>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                Add, customize, and edit expenditure & income categories with custom colors and icons
-              </p>
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
-        </Link>
+      {/* 2. Download Account Statement */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 transition-all group relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
 
-        {/* Customize Dashboard Option */}
-        <button
-          onClick={() => setSettingsOpen(true)}
-          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between text-left cursor-pointer"
-        >
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 group-hover:scale-105 transition-transform">
-              <Sliders className="w-5 h-5" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3.5 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-sky-500/10 to-indigo-500/20 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0 shadow-inner">
+              <Download className="w-6 h-6 stroke-[2.2]" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
-                Customize Dashboard
-              </h3>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                Configure spending velocity, category charts, payment modes, stealth mode, and biometric lock
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors">
+                  Download Account Statement
+                </h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">
+                  Executive PDF & Excel (.xlsx)
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xl">
+                Generate professional, auditable financial statements sorted by Date, Payment Mode, Amount, and Category. Choose from Month, Week, Day, Year, or Custom date ranges.
               </p>
-            </div>
-          </div>
-          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
-        </button>
 
-        {/* Security & PIN Settings */}
-        <div className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-start justify-between">
-          <div className="flex items-start gap-3.5">
-            <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-500/30 text-sky-400">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-zinc-200">Vault Security</h3>
-              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                Protected by 6-digit numeric PIN. Vault automatically locks after 2-3 minutes of inactivity or when locked manually.
-              </p>
-              <div className="mt-2 text-[11px] text-zinc-400 font-mono">
-                Status: <span className="text-emerald-400 font-bold">Encrypted & Active</span>
+              {/* Badges / Features preview */}
+              <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px] text-zinc-400">
+                <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
+                  <FileText className="w-3 h-3 text-emerald-400" /> Executive PDF
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
+                  <FileSpreadsheet className="w-3 h-3 text-sky-400" /> Multi-Sheet Excel (.xlsx)
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
+                  <Calendar className="w-3 h-3 text-amber-400" /> Any Period & Filter
+                </span>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Download Statement Option */}
-        <div className="sm:col-span-2 p-5 sm:p-6 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 transition-all group relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="p-3.5 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-sky-500/10 to-indigo-500/20 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0 shadow-inner">
-                <Download className="w-6 h-6 stroke-[2.2]" />
-              </div>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-base font-bold text-zinc-100 group-hover:text-emerald-300 transition-colors">
-                    Download Account Statement
-                  </h3>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">
-                    Executive PDF & Excel (.xlsx)
-                  </span>
-                </div>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xl">
-                  Generate professional, auditable financial statements sorted by Date, Payment Mode, Amount, and Category. Choose from Month, Week, Day, Year, or Custom date ranges.
-                </p>
-
-                {/* Badges / Features preview */}
-                <div className="flex flex-wrap items-center gap-2 mt-3 text-[11px] text-zinc-400">
-                  <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
-                    <FileText className="w-3 h-3 text-emerald-400" /> Executive PDF
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
-                    <FileSpreadsheet className="w-3 h-3 text-sky-400" /> Multi-Sheet Excel (.xlsx)
-                  </span>
-                  <span className="px-2.5 py-1 rounded-lg bg-zinc-850/80 border border-zinc-800 flex items-center gap-1.5 font-mono">
-                    <Calendar className="w-3 h-3 text-amber-400" /> Any Period & Filter
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setStatementOpen(true)}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer flex-shrink-0"
-            >
-              <Download className="w-4 h-4 stroke-[2.5]" />
-              <span>Export Statement</span>
-            </button>
-          </div>
+          <button
+            onClick={() => setStatementOpen(true)}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer flex-shrink-0"
+          >
+            <Download className="w-4 h-4 stroke-[2.5]" />
+            <span>Export Statement</span>
+          </button>
         </div>
       </div>
 
@@ -498,16 +419,55 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* 4 & 5. Customize Dashboard & Category Manager */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Customize Dashboard Option */}
+        <button
+          onClick={() => setSettingsOpen(true)}
+          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between text-left cursor-pointer"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 group-hover:scale-105 transition-transform flex-shrink-0">
+              <Sliders className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
+                Customize Dashboard
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Configure spending velocity, category charts, payment modes, stealth mode, and biometric lock
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
+        </button>
+
+        {/* Category Manager Option */}
+        <Link
+          href="/categories"
+          className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group flex items-start justify-between"
+        >
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 group-hover:scale-105 transition-transform flex-shrink-0">
+              <Tags className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-zinc-200 group-hover:text-emerald-300 transition-colors">
+                Category Manager
+              </h3>
+              <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
+                Add, customize, and edit expenditure & income categories with custom colors and icons
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors flex-shrink-0 mt-1" />
+        </Link>
+      </div>
+
       {/* Version Number at Bottom */}
-      <div className="pt-6 border-t border-zinc-850 flex flex-col sm:flex-row items-center justify-between gap-2 text-center text-xs text-zinc-500">
-        <div>
-          <span className="font-semibold text-zinc-400">RupeePulse PWA</span> • Version 1.2.0 (Build 2026.09)
-        </div>
-        <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-600">
-          <span>Personal Finance Vault</span>
-          <span>•</span>
-          <span>Single-User Private Edition</span>
-        </div>
+      <div className="pt-6 border-t border-zinc-850 flex flex-col items-center justify-center text-center text-xs text-zinc-500 gap-1 font-mono">
+        <span className="font-bold text-zinc-300">RupeePulse PWA</span>
+        <span className="text-[11px] text-zinc-400">Version 1.3.0 (Build 2026.09)</span>
       </div>
 
       {/* Edit Profile Modal */}
