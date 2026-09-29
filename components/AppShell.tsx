@@ -59,6 +59,27 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     };
   }, []);
 
+  // Proactively check for PWA service worker updates on app load and focus
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+    navigator.serviceWorker.getRegistration().then((reg) => {
+      if (reg) {
+        reg.update().catch(() => {});
+      }
+    });
+
+    const handleFocus = () => {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (reg) {
+          reg.update().catch(() => {});
+        }
+      });
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, []);
+
   // When pathname transitions (e.g. from /login to /), synchronize unlock status
   useEffect(() => {
     if (typeof window === "undefined") return;

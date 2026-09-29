@@ -136,14 +136,14 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
 
             {/* Spending Velocity */}
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3 transition-colors hover:border-zinc-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
                     <Gauge className="w-4 h-4" />
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="text-sm font-semibold text-zinc-100">Spending Velocity Gauge</div>
-                    <div className="text-[11px] text-zinc-400">
+                    <div className="text-[11px] text-zinc-400 leading-snug">
                       Shows whether spending pace is faster or slower vs past benchmarks
                     </div>
                   </div>
@@ -152,13 +152,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
                 {/* Toggle switch */}
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={prefs.showSpendingVelocity}
                   onClick={() => handleToggle("showSpendingVelocity")}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                     prefs.showSpendingVelocity ? "bg-emerald-500" : "bg-zinc-800"
                   }`}
                 >
-                  <div
-                    className={`bg-zinc-950 w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
                       prefs.showSpendingVelocity ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
@@ -201,14 +203,14 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
             </div>
 
             {/* Spend by Category */}
-            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between transition-colors hover:border-zinc-700">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400">
+            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3 transition-colors hover:border-zinc-700">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 flex-shrink-0">
                   <PieChart className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-zinc-100">Spend by Category</div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="text-[11px] text-zinc-400 leading-snug">
                     Category distribution donut chart with percentage breakdown
                   </div>
                 </div>
@@ -216,13 +218,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={prefs.showCategoryChart}
                 onClick={() => handleToggle("showCategoryChart")}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   prefs.showCategoryChart ? "bg-emerald-500" : "bg-zinc-800"
                 }`}
               >
-                <div
-                  className={`bg-zinc-950 w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
                     prefs.showCategoryChart ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -230,14 +234,14 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
             </div>
 
             {/* Payment Channels */}
-            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between transition-colors hover:border-zinc-700">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3 transition-colors hover:border-zinc-700">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0">
                   <CreditCard className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-zinc-100">Payment Channels</div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="text-[11px] text-zinc-400 leading-snug">
                     UPI, Cash, and Card/NetBanking cashflow splits
                   </div>
                 </div>
@@ -245,13 +249,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={prefs.showPaymentChannels}
                 onClick={() => handleToggle("showPaymentChannels")}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   prefs.showPaymentChannels ? "bg-emerald-500" : "bg-zinc-800"
                 }`}
               >
-                <div
-                  className={`bg-zinc-950 w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
                     prefs.showPaymentChannels ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -259,14 +265,14 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
             </div>
 
             {/* Recent Transactions */}
-            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between transition-colors hover:border-zinc-700">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3 transition-colors hover:border-zinc-700">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 flex-shrink-0">
                   <Clock className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-zinc-100">Recent Transactions</div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="text-[11px] text-zinc-400 leading-snug">
                     Latest 5 entries across categories with 1-click edit
                   </div>
                 </div>
@@ -274,13 +280,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={prefs.showRecentTransactions}
                 onClick={() => handleToggle("showRecentTransactions")}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   prefs.showRecentTransactions ? "bg-emerald-500" : "bg-zinc-800"
                 }`}
               >
-                <div
-                  className={`bg-zinc-950 w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
                     prefs.showRecentTransactions ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -295,14 +303,14 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
             </span>
 
             {/* Stealth Mode */}
-            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between transition-colors hover:border-zinc-700">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400">
+            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3 transition-colors hover:border-zinc-700">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-teal-400 flex-shrink-0">
                   <Eye className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-zinc-100">Stealth Mode (Pixelate Mask)</div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="text-[11px] text-zinc-400 leading-snug">
                     Mask balances with digital pixelated blocks (■■■■■) in public or when screen sharing
                   </div>
                 </div>
@@ -310,13 +318,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={prefs.stealthMode}
                 onClick={() => handleToggle("stealthMode")}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   prefs.stealthMode ? "bg-emerald-500" : "bg-zinc-800"
                 }`}
               >
-                <div
-                  className={`bg-zinc-950 w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
                     prefs.stealthMode ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
@@ -324,14 +334,14 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
             </div>
 
             {/* Biometric Unlock */}
-            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between transition-colors hover:border-zinc-700">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3 transition-colors hover:border-zinc-700">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 flex-shrink-0">
                   <Fingerprint className="w-4 h-4" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold text-zinc-100">Biometric Unlock</div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="text-[11px] text-zinc-400 leading-snug">
                     Allow unlocking vault via Fingerprint or FaceID on supported devices
                   </div>
                 </div>
@@ -339,13 +349,15 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={prefs.biometricEnabled}
                 onClick={() => handleToggle("biometricEnabled")}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   prefs.biometricEnabled ? "bg-emerald-500" : "bg-zinc-800"
                 }`}
               >
-                <div
-                  className={`bg-zinc-950 w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
                     prefs.biometricEnabled ? "translate-x-5" : "translate-x-0"
                   }`}
                 />

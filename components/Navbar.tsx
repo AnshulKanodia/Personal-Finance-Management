@@ -112,18 +112,30 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
           {/* Stealth Mode Quick Toggle */}
           <button
             onClick={toggleStealth}
+            type="button"
+            aria-label={prefs.stealthMode ? "Stealth Mode Active" : "Stealth Mode Inactive"}
             title={
               prefs.stealthMode
                 ? "Stealth Mode Active (Balances Hidden) • Click to reveal"
                 : "Stealth Mode Inactive • Click to hide sensitive numbers"
             }
-            className={`p-2 sm:p-2.5 rounded-xl border transition-all ${
+            className={`flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border text-xs font-semibold transition-all ${
               prefs.stealthMode
-                ? "border-teal-500/50 bg-teal-500/10 text-teal-400 shadow-[0_0_12px_rgba(20,184,166,0.2)]"
-                : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
+                ? "border-teal-500/50 bg-teal-500/15 text-teal-300 shadow-[0_0_15px_rgba(20,184,166,0.25)]"
+                : "border-zinc-800 bg-zinc-900/70 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700"
             }`}
           >
-            {prefs.stealthMode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            {prefs.stealthMode ? (
+              <>
+                <EyeOff className="w-4 h-4 text-teal-400" />
+                <span className="hidden md:inline font-mono text-[11px] text-teal-400 font-medium">Stealth ON</span>
+              </>
+            ) : (
+              <>
+                <Eye className="w-4 h-4 text-zinc-400" />
+                <span className="hidden md:inline font-mono text-[11px] text-zinc-400 font-medium">Stealth</span>
+              </>
+            )}
           </button>
 
           <button
