@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Tags, X, Check, RefreshCw } from "lucide-react";
 import { CategoryIcon, AVAILABLE_ICONS } from "@/components/CategoryIcon";
+import { RupeeLoader } from "@/components/RupeeLoader";
 
 interface Category {
   _id: string;
@@ -154,9 +155,8 @@ export default function CategoriesPage() {
 
       {/* Categories Grid */}
       {loading ? (
-        <div className="py-20 flex flex-col items-center justify-center text-zinc-500">
-          <RefreshCw className="w-8 h-8 animate-spin text-emerald-400 mb-3" />
-          <span className="text-xs">Loading categories...</span>
+        <div className="py-16 flex items-center justify-center">
+          <RupeeLoader label="Loading categories..." />
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

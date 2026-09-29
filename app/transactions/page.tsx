@@ -8,7 +8,7 @@ import {
   Trash2,
   Edit2,
   Calendar,
-  ReceiptIndianRupee,
+  IndianRupee,
   ChevronDown,
   X,
   CreditCard,
@@ -22,6 +22,7 @@ import { formatINR, formatDate } from "@/lib/utils";
 import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { EditTransactionModal } from "@/components/EditTransactionModal";
 import { DownloadStatementModal } from "@/components/DownloadStatementModal";
+import { RupeeLoader } from "@/components/RupeeLoader";
 
 import { getCached, setCached, clearCache } from "@/lib/clientCache";
 
@@ -303,13 +304,12 @@ export default function TransactionsPage() {
       {/* Transactions List */}
       <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 overflow-hidden">
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-zinc-500">
-            <RefreshCw className="w-8 h-8 animate-spin text-emerald-400 mb-3" />
-            <span className="text-xs">Loading ledger records...</span>
+          <div className="py-16 flex items-center justify-center">
+            <RupeeLoader label="Loading ledger records..." />
           </div>
         ) : transactions.length === 0 ? (
           <div className="py-16 text-center">
-            <ReceiptIndianRupee className="w-12 h-12 text-zinc-700 mx-auto mb-3" />
+            <IndianRupee className="w-12 h-12 text-zinc-700 mx-auto mb-3 stroke-[2]" />
             <h3 className="text-sm font-semibold text-zinc-300">No transactions found</h3>
             <p className="text-xs text-zinc-500 mt-1 max-w-sm mx-auto">
               No transactions matched your selected filters or search parameters.

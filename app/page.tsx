@@ -8,7 +8,7 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   TrendingUp,
-  ReceiptIndianRupee,
+  IndianRupee,
   Plus,
   ChevronLeft,
   ChevronRight,
@@ -26,6 +26,7 @@ import { formatINR, formatDate } from "@/lib/utils";
 import { QuickTransactionModal } from "@/components/QuickTransactionModal";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { EditTransactionModal } from "@/components/EditTransactionModal";
+import { RupeeLoader } from "@/components/RupeeLoader";
 
 import { getCached, setCached } from "@/lib/clientCache";
 
@@ -101,6 +102,14 @@ export default function DashboardPage() {
     const d = new Date(year, month - 1, 1);
     return d.toLocaleString("en-IN", { month: "long", year: "numeric" });
   };
+
+  if (loading && !data) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <RupeeLoader label="Loading financial overview..." />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -343,7 +352,7 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="text-center py-10">
-            <ReceiptIndianRupee className="w-10 h-10 text-zinc-600 mx-auto mb-2" />
+            <IndianRupee className="w-10 h-10 text-zinc-600 mx-auto mb-2 stroke-[2]" />
             <p className="text-sm text-zinc-400">No transactions recorded yet</p>
           </div>
         )}

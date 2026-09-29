@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  ReceiptIndianRupee,
+  IndianRupee,
   Users,
   User,
   Plus,
@@ -22,7 +22,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenQuickAdd }) => {
 
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/transactions", label: "Tracker", icon: ReceiptIndianRupee },
+    { href: "/transactions", label: "Tracker", icon: IndianRupee },
     { href: "/ledger", label: "Ledger", icon: Users },
     { href: "/profile", label: "Profile", icon: User },
   ];

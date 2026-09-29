@@ -184,6 +184,12 @@ export default function ProfilePage() {
 
   const handleLockVault = async () => {
     try {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("rupeepulse_unlocked");
+        sessionStorage.removeItem("rupeepulse_last_active");
+        localStorage.removeItem("rupeepulse_last_active");
+        window.dispatchEvent(new CustomEvent("vault_lock_requested"));
+      }
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
       router.refresh();
@@ -303,7 +309,7 @@ export default function ProfilePage() {
             <div>
               <h3 className="text-sm font-bold text-zinc-200">Vault Security</h3>
               <p className="text-xs text-zinc-500 mt-1 leading-relaxed">
-                Protected by 6-digit numeric PIN. Vault automatically locks on every page reload.
+                Protected by 6-digit numeric PIN. Vault automatically locks after 2-3 minutes of inactivity or when locked manually.
               </p>
               <div className="mt-2 text-[11px] text-zinc-400 font-mono">
                 Status: <span className="text-emerald-400 font-bold">Encrypted & Active</span>

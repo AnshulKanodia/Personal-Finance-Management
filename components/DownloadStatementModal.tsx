@@ -10,7 +10,6 @@ import {
   Check,
   TrendingDown,
   TrendingUp,
-  ReceiptIndianRupee,
   Layers,
   Sparkles,
   Loader2,

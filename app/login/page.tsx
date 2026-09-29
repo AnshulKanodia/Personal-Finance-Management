@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, IndianRupee, Delete, ArrowRight } from "lucide-react";
 import { Starfield } from "@/components/Starfield";
+import { RupeeLoader } from "@/components/RupeeLoader";
 
 function LoginForm() {
   const [pin, setPin] = useState<string>("");
@@ -66,6 +67,11 @@ function LoginForm() {
         return;
       }
 
+      const now = Date.now();
+      sessionStorage.setItem("rupeepulse_unlocked", "true");
+      sessionStorage.setItem("rupeepulse_last_active", now.toString());
+      localStorage.setItem("rupeepulse_last_active", now.toString());
+
       router.replace(redirectFrom);
       router.refresh();
     } catch (err: any) {
@@ -95,9 +101,9 @@ function LoginForm() {
     <div className="w-full max-w-sm flex flex-col items-center">
       {/* App Logo & Header */}
       <div className="flex flex-col items-center mb-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-sky-500 to-indigo-500 p-0.5 shadow-[0_0_35px_rgba(16,185,129,0.3)] mb-4">
-          <div className="w-full h-full bg-zinc-950 rounded-[14px] flex items-center justify-center">
-            <IndianRupee className="w-8 h-8 text-emerald-400" />
+        <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_30px_rgba(16,185,129,0.3)] mb-4">
+          <div className="w-full h-full bg-[#08080c] rounded-[14px] flex items-center justify-center">
+            <IndianRupee className="w-8 h-8 text-emerald-400 stroke-[2.2]" />
           </div>
         </div>
         <h1 className="text-2xl font-black tracking-tight text-zinc-100">RupeePulse</h1>
@@ -205,7 +211,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#050507] relative overflow-hidden select-none">
       <Starfield />
       <div className="relative z-10 w-full flex justify-center">
-        <Suspense fallback={<div className="text-xs text-zinc-500">Loading secure vault...</div>}>
+        <Suspense fallback={<RupeeLoader size="sm" label="Loading secure vault..." />}>
           <LoginForm />
         </Suspense>
       </div>

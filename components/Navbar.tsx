@@ -31,6 +31,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("rupeepulse_unlocked");
+        sessionStorage.removeItem("rupeepulse_last_active");
+        localStorage.removeItem("rupeepulse_last_active");
+        window.dispatchEvent(new CustomEvent("vault_lock_requested"));
+      }
       if (onLock) onLock();
       await fetch("/api/auth/logout", { method: "POST" });
     } catch (e) {
@@ -42,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
 
   const navLinks = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/transactions", label: "Tracker", icon: ReceiptIndianRupee },
+    { href: "/transactions", label: "Tracker", icon: IndianRupee },
     { href: "/ledger", label: "Ledger", icon: Users },
     { href: "/profile", label: "Profile", icon: User },
   ];
@@ -52,9 +58,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-sky-500 p-0.5 shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-transform group-hover:scale-105">
-            <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center">
-              <IndianRupee className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors" />
+          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] transition-transform group-hover:scale-105">
+            <div className="w-full h-full bg-[#08080c] rounded-[10px] flex items-center justify-center">
+              <IndianRupee className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors stroke-[2.2]" />
             </div>
           </div>
           <div>

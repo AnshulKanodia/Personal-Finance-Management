@@ -10,7 +10,7 @@ import {
   Clock,
   Phone,
   Trash2,
-  ReceiptIndianRupee,
+  IndianRupee,
   RefreshCw,
   Sparkles,
   ChevronDown,
@@ -20,6 +20,7 @@ import {
 import { formatINR, formatDate } from "@/lib/utils";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { SettleUpModal } from "@/components/SettleUpModal";
+import { RupeeLoader } from "@/components/RupeeLoader";
 
 import { getCached, setCached } from "@/lib/clientCache";
 
@@ -139,6 +140,14 @@ export default function LedgerPage() {
 
   const totalSettledAmount = filteredSettledDues.reduce((sum, d) => sum + d.amount, 0);
 
+  if (loading && friends.length === 0) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <RupeeLoader label="Loading ledger dues..." />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300 pb-12">
       {/* Top Header */}
@@ -208,7 +217,7 @@ export default function LedgerPage() {
               Net Position
             </span>
             <div className="p-2 rounded-xl bg-zinc-800 text-zinc-300 border border-zinc-700">
-              <ReceiptIndianRupee className="w-4 h-4" />
+              <IndianRupee className="w-4 h-4 stroke-[2.2]" />
             </div>
           </div>
           <div

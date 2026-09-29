@@ -92,12 +92,12 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
       <div className="relative w-full max-w-[340px] sm:max-w-sm flex flex-col items-center z-10 animate-in fade-in zoom-in-95 duration-300">
         {/* Brand Header */}
         <div className="flex flex-col items-center mb-5 sm:mb-6 text-center">
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 via-sky-500 to-indigo-500 p-0.5 shadow-[0_0_35px_rgba(16,185,129,0.35)] mb-2.5 sm:mb-3 transition-transform hover:scale-105">
-            <div className="w-full h-full bg-[#09090d] rounded-[14px] flex items-center justify-center">
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_30px_rgba(16,185,129,0.3)] mb-2.5 sm:mb-3 transition-transform hover:scale-105">
+            <div className="w-full h-full bg-[#08080c] rounded-[14px] flex items-center justify-center">
               {isSuccess ? (
                 <Unlock className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 animate-in zoom-in duration-200" />
               ) : (
-                <IndianRupee className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400" />
+                <IndianRupee className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 stroke-[2.2]" />
               )}
             </div>
           </div>
@@ -108,7 +108,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
             <Lock className="w-3 h-3 text-emerald-400" />
             <span>Vault Locked</span>
             <span>•</span>
-            <span className="text-[11px] text-zinc-500 font-mono">Auto-locks on reload</span>
+            <span className="text-[11px] text-zinc-500 font-mono">PIN Protected</span>
           </div>
         </div>
 
