@@ -30,7 +30,7 @@ Unlike generic multi-tenant expense trackers, RupeePulse is architected as an ul
   - **Sky-500** (`#0ea5e9`): UPI digital transfers and QR reconciliations.
   - **Amber-500** (`#f59e0b`): Cash balances and petty cash reserves.
   - **Violet-500** (`#8b5cf6`): Credit Cards and Net Banking settlements.
-- **PIN-Secured Vault**: Protected by a 6-digit numeric PIN with an enlarged touch keypad. Automatically locks on browser reload for zero-exposure privacy.
+- **PIN-Secured Vault**: Protected by a 6-digit numeric PIN with an enlarged touch keypad. Automatically locks after 2-3 minutes of inactivity or upon manual lock for zero-exposure privacy.
 - **📑 Statement Exporter (PDF, Excel .xlsx & CSV)**:
   - Generate official PDF statements with executive summary cards, transaction movement tables, and confidential vault footers.
   - Multi-sheet Excel spreadsheets (`.xlsx`) and CSV tables with category volume breakdown, payment channel analysis, and net formulas.
@@ -134,8 +134,9 @@ Personal-Finance-Management/
    Provide your values in `.env.local`:
    ```env
    MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/rupeepulse?retryWrites=true&w=majority
-   JWT_SECRET=your_jwt_encryption_secret_key
-   VAULT_PIN=123456
+   APP_PIN=123456
+   SESSION_SECRET=your_jwt_encryption_secret_key
+   NEXT_PUBLIC_USER_NAME="Vault Owner"
    ```
 
 4. **Start the Next.js Development Server**:

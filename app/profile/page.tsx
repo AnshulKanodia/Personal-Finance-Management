@@ -40,18 +40,26 @@ interface Category {
   name: string;
 }
 
+const DEFAULT_USERNAME = process.env.NEXT_PUBLIC_USER_NAME || "Vault Owner";
+
 export default function ProfilePage() {
   const router = useRouter();
 
-  // User Profile State (persisted in localStorage)
-  const [name, setName] = useState<string>("Anshul Kanodia");
-  const [email, setEmail] = useState<string>("anshulkanodia3560@gmail.com");
-  const [currency, setCurrency] = useState<string>("INR (₹)");
+  // User Profile State (configurable via env and persisted in localStorage)
+  const [username, setUsername] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved =
+        localStorage.getItem("rupeepulse_username") ||
+        localStorage.getItem("rupeepulse_user_name");
+      if (saved) return saved;
+    }
+    return DEFAULT_USERNAME;
+  });
+  const [currency] = useState<string>("INR (₹)");
 
   // Modals / Editing state
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
-  const [editName, setEditName] = useState<string>("");
-  const [editEmail, setEditEmail] = useState<string>("");
+  const [editUsername, setEditUsername] = useState<string>("");
 
   // Friends State
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -66,10 +74,10 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedName = localStorage.getItem("rupeepulse_user_name");
-      const savedEmail = localStorage.getItem("rupeepulse_user_email");
-      if (savedName) setName(savedName);
-      if (savedEmail) setEmail(savedEmail);
+      const saved =
+        localStorage.getItem("rupeepulse_username") ||
+        localStorage.getItem("rupeepulse_user_name");
+      if (saved) setUsername(saved);
     }
     fetchFriends();
     fetchCategories();
@@ -106,20 +114,16 @@ export default function ProfilePage() {
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    if (editName.trim()) {
-      setName(editName.trim());
-      localStorage.setItem("rupeepulse_user_name", editName.trim());
-    }
-    if (editEmail.trim()) {
-      setEmail(editEmail.trim());
-      localStorage.setItem("rupeepulse_user_email", editEmail.trim());
+    if (editUsername.trim()) {
+      setUsername(editUsername.trim());
+      localStorage.setItem("rupeepulse_username", editUsername.trim());
+      localStorage.setItem("rupeepulse_user_name", editUsername.trim());
     }
     setIsEditingProfile(false);
   };
 
   const handleOpenEditProfile = () => {
-    setEditName(name);
-    setEditEmail(email);
+    setEditUsername(username);
     setIsEditingProfile(true);
   };
 
@@ -198,12 +202,15 @@ export default function ProfilePage() {
     }
   };
 
-  const initials = name
-    .split(" ")
+  const initials = (username || "V")
+    .trim()
+    .split(/\s+/)
     .map((n) => n[0])
     .join("")
     .toUpperCase()
-    .slice(0, 2);
+    .slice(0, 2) || "V";
+
+  const handleSlug = username.toLowerCase().replace(/[^a-z0-9_]/g, "");
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-300 pb-12">
@@ -217,27 +224,36 @@ export default function ProfilePage() {
         </p>
       </div>
 
-      {/* Main Profile Card */}
-      <div className="rounded-3xl glass-panel p-6 sm:p-7 border border-white/[0.08] relative overflow-hidden">
+      {/* Main Profile Card (Optimized for Mobile & Desktop) */}
+      <div className="rounded-3xl glass-panel p-5 sm:p-7 border border-white/[0.08] relative overflow-hidden">
         <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent" />
 
-        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-5 text-center sm:text-left">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-emerald-500 via-sky-500 to-indigo-500 p-0.5 shadow-[0_0_30px_rgba(16,185,129,0.3)] flex-shrink-0">
-              <div className="w-full h-full bg-[#0a0a0f] rounded-[14px] flex items-center justify-center font-black text-2xl text-emerald-400">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6">
+          {/* Identity info */}
+          <div className="flex items-center gap-3.5 sm:gap-4.5 w-full sm:w-auto">
+            {/* Mobile-optimized profile avatar icon */}
+            <div className="w-13 h-13 sm:w-16 sm:h-16 rounded-2xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] flex-shrink-0">
+              <div className="w-full h-full bg-[#08080c] rounded-[13px] flex items-center justify-center font-black text-lg sm:text-xl text-emerald-400">
                 {initials}
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h2 className="text-xl sm:text-2xl font-black text-zinc-100">{name}</h2>
-                <span className="p-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-base sm:text-xl font-black text-zinc-100 truncate">
+                  {username}
+                </h2>
+                <span
+                  className="p-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex-shrink-0"
+                  title="Verified Vault Owner"
+                >
                   <ShieldCheck className="w-3.5 h-3.5" />
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 mt-0.5 font-mono">{email}</p>
-              <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
+              <p className="text-xs text-zinc-400 font-mono mt-0.5 truncate">
+                @{handleSlug || "vault"}
+              </p>
+              <div className="flex items-center gap-1.5 mt-1.5">
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold font-mono">
                   Vault Owner
                 </span>
@@ -248,18 +264,19 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
+          {/* Action buttons on mobile & desktop */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end pt-3 sm:pt-0 border-t border-zinc-850 sm:border-0">
             <button
               onClick={() => setStatementOpen(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer"
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] active:scale-95 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Download Statement</span>
+              <span>Statement</span>
             </button>
 
             <button
               onClick={handleOpenEditProfile}
-              className="px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-semibold text-zinc-200 transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Edit Profile</span>
@@ -267,7 +284,7 @@ export default function ProfilePage() {
 
             <button
               onClick={handleLockVault}
-              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold text-rose-400 transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
               title="Lock vault immediately"
             >
               <Lock className="w-3.5 h-3.5" />
@@ -482,28 +499,20 @@ export default function ProfilePage() {
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                  Full Name
+                  Vault Display Name / Username
                 </label>
                 <input
                   type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value)}
+                  placeholder="e.g. Vault Owner or Anshul"
                   className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-emerald-500"
                   required
+                  autoFocus
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-emerald-500"
-                  required
-                />
+                <p className="text-[11px] text-zinc-500 mt-1.5 leading-relaxed">
+                  You can also customize your default username in your <code className="text-zinc-300 bg-zinc-900 px-1 py-0.5 rounded border border-zinc-800">.env</code> file with <code className="text-emerald-400 font-mono">NEXT_PUBLIC_USER_NAME</code>.
+                </p>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">
@@ -518,7 +527,7 @@ export default function ProfilePage() {
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)]"
                 >
-                  Save Profile
+                  Save Username
                 </button>
               </div>
             </form>
