@@ -55,7 +55,6 @@ export default function ProfilePage() {
     }
     return DEFAULT_USERNAME;
   });
-  const [currency] = useState<string>("INR (₹)");
 
   // Modals / Editing state
   const [isEditingProfile, setIsEditingProfile] = useState<boolean>(false);
@@ -257,9 +256,6 @@ export default function ProfilePage() {
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-semibold font-mono">
                   Vault Owner
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono">
-                  {currency}
-                </span>
               </div>
             </div>
           </div>
@@ -350,7 +346,7 @@ export default function ProfilePage() {
                     Download Account Statement
                   </h3>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono font-medium">
-                    Bank-Grade PDF / Excel / CSV
+                    Executive PDF & Excel (.xlsx)
                   </span>
                 </div>
                 <p className="text-xs text-zinc-400 mt-1 leading-relaxed max-w-xl">
@@ -476,7 +472,7 @@ export default function ProfilePage() {
           <span className="font-semibold text-zinc-400">RupeePulse PWA</span> • Version 1.2.0 (Build 2026.09)
         </div>
         <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-600">
-          <span>Tailored for Indian Currency (INR)</span>
+          <span>Personal Finance Vault</span>
           <span>•</span>
           <span>Single-User Private Edition</span>
         </div>

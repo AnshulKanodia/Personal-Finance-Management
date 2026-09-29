@@ -67,9 +67,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
               RupeePulse
             </span>
-            <span className="hidden sm:inline-block ml-2 text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 font-mono">
-              INR Vault
-            </span>
           </div>
         </Link>
 

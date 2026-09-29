@@ -208,7 +208,7 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
           {/* Amount Input */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Amount (INR)
+              Amount
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-zinc-400">

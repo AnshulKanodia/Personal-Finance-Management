@@ -132,11 +132,11 @@ export async function GET(req: NextRequest) {
         },
       ]),
 
-      // 6. Recent 8 transactions
+      // 6. Recent 5 transactions
       Transaction.find()
         .populate("category", "name color icon")
         .sort({ date: -1, createdAt: -1 })
-        .limit(8)
+        .limit(5)
         .lean(),
     ]);
 

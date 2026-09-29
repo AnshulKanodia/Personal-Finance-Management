@@ -285,7 +285,7 @@ export default function DashboardPage() {
             <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
               Recent Transactions
             </h3>
-            <p className="text-xs text-zinc-500">Latest entries across categories</p>
+            <p className="text-xs text-zinc-500">Latest 5 entries across categories</p>
           </div>
           <Link
             href="/transactions"
@@ -298,7 +298,7 @@ export default function DashboardPage() {
 
         {data?.recentTransactions && data.recentTransactions.length > 0 ? (
           <div className="divide-y divide-zinc-850">
-            {data.recentTransactions.map((tx: any) => {
+            {data.recentTransactions.slice(0, 5).map((tx: any) => {
               const isExpense = tx.type === "EXPENSE";
               const cat = tx.category || { name: "General", color: "#71717a", icon: "Tag" };
 

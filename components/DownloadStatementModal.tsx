@@ -10,7 +10,6 @@ import {
   Check,
   TrendingDown,
   TrendingUp,
-  Layers,
   Sparkles,
   Loader2,
   Filter,
@@ -36,7 +35,7 @@ interface DownloadStatementModalProps {
 }
 
 type PeriodType = "MONTH" | "WEEK" | "DAY" | "YEAR" | "CUSTOM";
-type ExportFormat = "PDF" | "EXCEL" | "CSV";
+type ExportFormat = "PDF" | "EXCEL";
 
 export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
   isOpen,
@@ -231,17 +230,11 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
           summary,
           `RupeePulse_Statement_${sanitizedLabel}.pdf`
         );
-      } else if (format === "EXCEL") {
+      } else {
         exportStatementToExcel(
           transactions,
           summary,
           `RupeePulse_Statement_${sanitizedLabel}.xlsx`
-        );
-      } else {
-        exportStatementToCSV(
-          transactions,
-          summary,
-          `RupeePulse_Statement_${sanitizedLabel}.csv`
         );
       }
       onClose();
@@ -274,9 +267,6 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
             <div>
               <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
                 <span>Download Statement</span>
-                <span className="text-[10px] px-2 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-                  INR Vault
-                </span>
               </h3>
               <p className="text-xs text-zinc-400 mt-0.5">
                 Generate an official PDF or Excel statement of your transactions
@@ -299,17 +289,17 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
             <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
               1. Select File Format
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setFormat("PDF")}
-                className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                   format === "PDF"
                     ? "bg-rose-500/10 border-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)]"
                     : "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <FileText className={`w-5 h-5 ${format === "PDF" ? "text-rose-400" : "text-zinc-500"}`} />
                   {format === "PDF" && (
                     <div className="w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center">
@@ -318,21 +308,21 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
                   )}
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-zinc-100">PDF Document</div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">Official Account Print</div>
+                  <div className="text-xs font-bold text-zinc-100">Executive PDF</div>
+                  <div className="text-[10px] text-zinc-400 mt-0.5">Formal Bank-Grade Report</div>
                 </div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setFormat("EXCEL")}
-                className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
+                className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
                   format === "EXCEL"
                     ? "bg-emerald-500/10 border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.15)]"
                     : "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <FileSpreadsheet className={`w-5 h-5 ${format === "EXCEL" ? "text-emerald-400" : "text-zinc-500"}`} />
                   {format === "EXCEL" && (
                     <div className="w-4 h-4 rounded-full bg-emerald-500 text-zinc-950 flex items-center justify-center">
@@ -342,30 +332,7 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
                 </div>
                 <div>
                   <div className="text-xs font-bold text-zinc-100">Excel (.xlsx)</div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">Multi-Sheet Analysis</div>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setFormat("CSV")}
-                className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
-                  format === "CSV"
-                    ? "bg-sky-500/10 border-sky-500/50 shadow-[0_0_15px_rgba(14,165,233,0.15)]"
-                    : "bg-zinc-900/60 border-zinc-800 hover:border-zinc-700"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <Layers className={`w-5 h-5 ${format === "CSV" ? "text-sky-400" : "text-zinc-500"}`} />
-                  {format === "CSV" && (
-                    <div className="w-4 h-4 rounded-full bg-sky-500 text-zinc-950 flex items-center justify-center">
-                      <Check className="w-2.5 h-2.5 stroke-[3]" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-zinc-100">CSV Table</div>
-                  <div className="text-[10px] text-zinc-400 mt-0.5">Sheets / Raw Data</div>
+                  <div className="text-[10px] text-zinc-400 mt-0.5">Multi-Sheet Data Analysis</div>
                 </div>
               </button>
             </div>

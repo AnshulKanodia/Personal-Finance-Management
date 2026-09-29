@@ -146,7 +146,6 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
         <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-base font-bold text-zinc-100">Quick Log</span>
-            <span className="text-xs text-zinc-400 font-mono">INR</span>
           </div>
           <button
             onClick={onClose}
@@ -193,7 +192,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
           {/* Amount Input */}
           <div>
             <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Amount (INR)
+              Amount
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold text-zinc-400">
