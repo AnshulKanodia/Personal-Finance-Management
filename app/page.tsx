@@ -18,6 +18,7 @@ import {
   Coins,
   RefreshCw,
   Edit2,
+  Clock,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { SpendCategoryChart } from "@/components/SpendCategoryChart";
@@ -242,11 +243,21 @@ export default function DashboardPage() {
           {prefs.showPaymentChannels && (
             <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
-                    Payment Channels
-                  </h3>
-                  <span className="text-[10px] text-zinc-500 font-mono">This Month</span>
+                <div className="flex items-center justify-between mb-4 gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-purple-400 shadow-inner flex-shrink-0">
+                      <CreditCard className="w-4 h-4 stroke-[2.2]" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-xs sm:text-sm font-bold text-zinc-100 tracking-tight">
+                        Payment Channels
+                      </h3>
+                      <p className="text-[11px] text-zinc-400">Cashflow across payment modes</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-zinc-500 font-mono px-2 py-0.5 rounded-md bg-zinc-950 border border-zinc-800 flex-shrink-0">
+                    This Month
+                  </span>
                 </div>
 
                 <div className="space-y-3">
@@ -319,16 +330,21 @@ export default function DashboardPage() {
       {/* Bottom Section: Recent Transactions */}
       {prefs.showRecentTransactions && (
         <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
-                Recent Transactions
-              </h3>
-              <p className="text-xs text-zinc-500">Latest 5 entries across categories</p>
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-amber-400 shadow-inner flex-shrink-0">
+                <Clock className="w-4 h-4 stroke-[2.2]" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-xs sm:text-sm font-bold text-zinc-100 tracking-tight">
+                  Recent Transactions
+                </h3>
+                <p className="text-[11px] text-zinc-400">Latest 5 entries across categories</p>
+              </div>
             </div>
             <Link
               href="/transactions"
-              className="text-xs text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1 hover:underline"
+              className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 hover:underline flex-shrink-0"
             >
               <span>View All</span>
               <ChevronRight className="w-3.5 h-3.5" />

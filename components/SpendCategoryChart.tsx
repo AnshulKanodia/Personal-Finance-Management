@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+import { PieChart as PieChartIcon } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { CategoryIcon } from "./CategoryIcon";
 
@@ -61,11 +62,19 @@ export const SpendCategoryChart: React.FC<SpendCategoryChartProps> = ({ data }) 
 
   return (
     <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-5">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium tracking-wider text-zinc-400 uppercase">
-          Spend By Category
-        </h3>
-        <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+      <div className="flex items-center justify-between mb-3 gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sky-400 shadow-inner flex-shrink-0">
+            <PieChartIcon className="w-4 h-4 stroke-[2.2]" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-xs sm:text-sm font-bold text-zinc-100 tracking-tight">
+              Spend By Category
+            </h3>
+            <p className="text-[11px] text-zinc-400">Monthly expense distribution</p>
+          </div>
+        </div>
+        <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 font-mono whitespace-nowrap flex-shrink-0">
           Total: {formatINR(grandTotal)}
         </span>
       </div>
