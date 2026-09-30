@@ -43,6 +43,12 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setType(initialType);
+      setIsCreatingFriend(false);
+      setNewFriendName("");
+      setNewFriendPhone("");
+      setError("");
+      setAmount("");
+      setNotes("");
       if (preselectedFriendId) {
         setFriendId(preselectedFriendId);
       }
@@ -56,8 +62,10 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
       const json = await res.json();
       if (json.success) {
         setFriends(json.data);
-        if (!friendId && !preselectedFriendId && json.data.length > 0) {
+        if (!preselectedFriendId && json.data.length > 0) {
           setFriendId(json.data[0]._id);
+        } else if (json.data.length === 0) {
+          setIsCreatingFriend(true);
         }
       }
     } catch (e) {
@@ -65,7 +73,8 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
     }
   };
 
-  const selectedFriend = friends.find((f) => f._id === friendId);
+  // Only evaluate selectedFriend when selecting an existing friend, never when creating a new one
+  const selectedFriend = !isCreatingFriend ? friends.find((f) => f._id === friendId) : null;
   const currentNet = selectedFriend?.netBalance ?? 0;
   const numAmount = parseFloat(amount) || 0;
   // If friend paid me (TO_GIVE), it reduces what they owe (or increases what I owe): currentNet - numAmount
@@ -229,9 +238,9 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
               />
             </div>
 
-            {/* Live Net Balance Adjustment Preview */}
-            {selectedFriend && numAmount > 0 && (
-              <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs">
+            {/* Live Net Balance Adjustment Preview for Existing Friend */}
+            {!isCreatingFriend && selectedFriend && numAmount > 0 && (
+              <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs animate-in fade-in duration-150">
                 <div className="flex items-center justify-between text-zinc-400 text-[11px]">
                   <span>Current Balance with {selectedFriend.name}:</span>
                   <span className={currentNet >= 0 ? "text-emerald-400 font-semibold" : "text-rose-400 font-semibold"}>
@@ -248,6 +257,24 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
                 </div>
               </div>
             )}
+
+            {/* Live Net Balance Adjustment Preview for New Friend */}
+            {isCreatingFriend && newFriendName.trim() && numAmount > 0 && (
+              <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs animate-in fade-in duration-150">
+                <div className="flex items-center justify-between text-zinc-400 text-[11px]">
+                  <span>Current Balance with {newFriendName.trim()}:</span>
+                  <span className="text-zinc-400 font-semibold">₹0 (New Contact)</span>
+                </div>
+                <div className="flex items-center justify-between font-bold mt-1.5 pt-1.5 border-t border-zinc-800/60">
+                  <span className="text-zinc-200">Adjusted Net Balance:</span>
+                  <span className={type === "TO_TAKE" ? "text-emerald-400 font-mono text-sm" : "text-rose-400 font-mono text-sm"}>
+                    {type === "TO_TAKE"
+                      ? `+${formatINR(numAmount)} (${newFriendName.trim()} will owe you)`
+                      : `-${formatINR(numAmount)} (You will owe ${newFriendName.trim()})`}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Friend Selection or Create Friend */}
@@ -256,7 +283,14 @@ export const QuickDueModal: React.FC<QuickDueModalProps> = ({
               <label className="text-xs font-medium text-zinc-400">Friend</label>
               <button
                 type="button"
-                onClick={() => setIsCreatingFriend(!isCreatingFriend)}
+                onClick={() => {
+                  const nextState = !isCreatingFriend;
+                  setIsCreatingFriend(nextState);
+                  setError("");
+                  if (!nextState && !friendId && friends.length > 0) {
+                    setFriendId(friends[0]._id);
+                  }
+                }}
                 className="text-xs text-sky-400 hover:text-sky-300 flex items-center gap-1 font-medium"
               >
                 <UserPlus className="w-3.5 h-3.5" />
