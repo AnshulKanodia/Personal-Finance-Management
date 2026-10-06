@@ -78,3 +78,18 @@ body {
 .safe-area-top {
   padding-top: max(0.5rem, env(safe-area-inset-top));
 }
+
+/* Suppress mobile/browser focus rings on Recharts SVG elements */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-pie,
+.recharts-sector,
+.recharts-pie-sector,
+.recharts-wrapper *:focus,
+.recharts-surface *:focus,
+svg.recharts-surface:focus,
+path.recharts-sector:focus {
+  outline: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
