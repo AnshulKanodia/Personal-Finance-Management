@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Sector } from "recharts";
-import { PieChart as PieChartIcon } from "lucide-react";
+import React, { useState } from "react";
+import { ResponsiveContainer, PieChart, Pie, Cell, Sector } from "recharts";
+import { PieChart as PieChartIcon, RotateCcw } from "lucide-react";
 import { formatINR } from "@/lib/utils";
-import { CategoryIcon } from "./CategoryIcon";
 
 interface CategorySpendItem {
   _id: string;
@@ -20,7 +19,8 @@ interface SpendCategoryChartProps {
 }
 
 export const SpendCategoryChart: React.FC<SpendCategoryChartProps> = ({ data }) => {
-  const [isTooltipActive, setIsTooltipActive] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (!data || data.length === 0) {
     return (
@@ -36,56 +36,38 @@ export const SpendCategoryChart: React.FC<SpendCategoryChartProps> = ({ data }) 
 
   const grandTotal = data.reduce((acc, curr) => acc + curr.total, 0);
 
-  // Custom Active Shape to replace default browser outline with subtle smooth pop-out
+  // Active item determined by hover (desktop) or explicit 1-tap selection (mobile/desktop)
+  const activeIndex = hoveredIndex !== null ? hoveredIndex : selectedIndex;
+  const activeItem = activeIndex !== null && data[activeIndex] ? data[activeIndex] : null;
+  const activePercent =
+    activeItem && grandTotal > 0 ? ((activeItem.total / grandTotal) * 100).toFixed(1) : "0";
+
+  // Smooth pop-out active shape without any blocking tooltip overlay
   const renderActiveShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
     return (
-      <g style={{ outline: "none" }}>
+      <g style={{ outline: "none", cursor: "pointer" }}>
         <Sector
           cx={cx}
           cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 4}
+          innerRadius={innerRadius - 2}
+          outerRadius={outerRadius + 6}
           startAngle={startAngle}
           endAngle={endAngle}
           fill={fill}
           stroke="#060608"
-          strokeWidth={2}
-          style={{ outline: "none" }}
+          strokeWidth={3}
+          style={{
+            outline: "none",
+            filter: "drop-shadow(0px 0px 8px rgba(0,0,0,0.7))",
+          }}
         />
       </g>
     );
   };
 
-  // Custom Tooltip for Recharts with solid background and z-index isolation
-  const CustomTooltip = ({ active, payload }: any) => {
-    useEffect(() => {
-      setIsTooltipActive(Boolean(active && payload && payload.length));
-      return () => setIsTooltipActive(false);
-    }, [active, payload]);
-
-    if (active && payload && payload.length) {
-      const item = payload[0].payload as CategorySpendItem;
-      const percent = grandTotal > 0 ? ((item.total / grandTotal) * 100).toFixed(1) : "0";
-      return (
-        <div className="bg-zinc-950 border border-zinc-700/80 p-3 rounded-xl shadow-[0_12px_36px_rgba(0,0,0,0.9)] relative z-50 pointer-events-none select-none">
-          <div className="flex items-center gap-2">
-            <span
-              className="w-3 h-3 rounded-full inline-block shadow-sm flex-shrink-0"
-              style={{ backgroundColor: item.color }}
-            />
-            <span className="text-xs font-semibold text-zinc-100">{item.name}</span>
-          </div>
-          <div className="mt-1 text-base font-bold text-rose-400 font-mono">
-            {formatINR(item.total)}
-          </div>
-          <div className="text-[11px] text-zinc-400 mt-0.5">
-            {percent}% of total • {item.count} transaction{item.count > 1 ? "s" : ""}
-          </div>
-        </div>
-      );
-    }
-    return null;
+  const handleSliceClick = (index: number) => {
+    setSelectedIndex((prev) => (prev === index ? null : index));
   };
 
   return (
@@ -102,22 +84,70 @@ export const SpendCategoryChart: React.FC<SpendCategoryChartProps> = ({ data }) 
             <p className="text-[11px] text-zinc-400">Monthly expense distribution</p>
           </div>
         </div>
-        <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 font-mono whitespace-nowrap flex-shrink-0">
-          Total: {formatINR(grandTotal)}
-        </span>
+
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {selectedIndex !== null && (
+            <button
+              onClick={() => {
+                setSelectedIndex(null);
+                setHoveredIndex(null);
+              }}
+              className="text-[11px] text-zinc-400 hover:text-zinc-200 bg-zinc-800/80 px-2.5 py-1 rounded-lg border border-zinc-700/60 flex items-center gap-1 transition-all active:scale-95"
+              title="Reset selection"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset</span>
+            </button>
+          )}
+          <span className="text-xs font-semibold text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20 font-mono whitespace-nowrap">
+            Total: {formatINR(grandTotal)}
+          </span>
+        </div>
       </div>
 
       <div className="h-60 w-full relative">
-        {/* Center label: sits at z-10 behind the tooltip, smoothly fades out when active */}
+        {/* Center label: displays category breakdown cleanly in the donut hole on 1-tap/hover, or total categories when idle */}
         <div
-          className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 transition-all duration-200 ${
-            isTooltipActive ? "opacity-0 scale-95" : "opacity-100 scale-100"
+          onClick={() => {
+            if (selectedIndex !== null) {
+              setSelectedIndex(null);
+              setHoveredIndex(null);
+            }
+          }}
+          className={`absolute inset-0 flex flex-col items-center justify-center z-10 px-3 text-center transition-all duration-150 ${
+            activeItem ? "cursor-pointer" : "pointer-events-none"
           }`}
         >
-          <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
-            Categories
-          </span>
-          <span className="text-lg font-bold text-zinc-200">{data.length}</span>
+          {activeItem ? (
+            <div className="flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-150 max-w-[110px]">
+              <div className="flex items-center gap-1.5 max-w-[105px] justify-center truncate">
+                <span
+                  className="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0 shadow-sm"
+                  style={{ backgroundColor: activeItem.color }}
+                />
+                <span className="text-xs font-bold text-zinc-100 truncate">
+                  {activeItem.name}
+                </span>
+              </div>
+              <span className="text-base font-extrabold text-rose-400 font-mono mt-0.5 tracking-tight">
+                {formatINR(activeItem.total)}
+              </span>
+              <span className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                {activePercent}% • {activeItem.count} {activeItem.count === 1 ? "txn" : "txns"}
+              </span>
+              <span className="text-[9px] text-zinc-500 mt-0.5 opacity-70">
+                Tap to reset
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center animate-in fade-in duration-150">
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+                Categories
+              </span>
+              <span className="text-lg font-bold text-zinc-200">{data.length}</span>
+              <span className="text-[9px] text-zinc-500 mt-0.5">Tap slice to view</span>
+            </div>
+          )}
         </div>
 
         <ResponsiveContainer width="100%" height="100%" className="relative z-20">
@@ -131,47 +161,74 @@ export const SpendCategoryChart: React.FC<SpendCategoryChartProps> = ({ data }) 
               paddingAngle={4}
               dataKey="total"
               nameKey="name"
+              activeIndex={activeIndex !== null ? activeIndex : undefined}
               activeShape={renderActiveShape}
+              onClick={(_, index) => handleSliceClick(index)}
+              onMouseEnter={(_, index) => setHoveredIndex(index)}
+              onMouseLeave={() => setHoveredIndex(null)}
+              cursor="pointer"
               style={{ outline: "none" }}
             >
-              {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.color || "#10b981"}
-                  stroke="#09090b"
-                  strokeWidth={2}
-                  style={{ outline: "none" }}
-                />
-              ))}
+              {data.map((entry, index) => {
+                const isDimmed = activeIndex !== null && activeIndex !== index;
+                return (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={entry.color || "#10b981"}
+                    stroke="#09090b"
+                    strokeWidth={2}
+                    fillOpacity={isDimmed ? 0.35 : 1}
+                    style={{
+                      outline: "none",
+                      cursor: "pointer",
+                      transition: "fill-opacity 0.2s ease",
+                    }}
+                  />
+                );
+              })}
             </Pie>
-            <Tooltip
-              content={<CustomTooltip />}
-              wrapperStyle={{ zIndex: 50, outline: "none", pointerEvents: "none" }}
-            />
           </PieChart>
         </ResponsiveContainer>
       </div>
 
-      {/* Category List Breakdown */}
+      {/* Category List Breakdown: 1-Tap Interactive Buttons */}
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 pt-3 border-t border-zinc-800/60">
-        {data.slice(0, 6).map((item) => {
+        {data.slice(0, 6).map((item, idx) => {
           const percent = grandTotal > 0 ? ((item.total / grandTotal) * 100).toFixed(0) : "0";
+          const isSelected = activeIndex === idx;
           return (
-            <div
+            <button
               key={item._id || item.name}
-              className="flex items-center justify-between p-2 rounded-lg bg-zinc-950/50 border border-zinc-800/50 text-xs"
+              type="button"
+              onClick={() => handleSliceClick(idx)}
+              className={`flex items-center justify-between p-2 rounded-xl border text-xs transition-all active:scale-95 text-left ${
+                isSelected
+                  ? "bg-zinc-800/95 border-sky-500/60 shadow-[0_0_15px_rgba(14,165,233,0.2)] ring-1 ring-sky-500/40"
+                  : "bg-zinc-950/50 border-zinc-800/50 hover:border-zinc-750 text-zinc-300"
+              }`}
             >
-              <div className="flex items-center gap-1.5 truncate">
+              <div className="flex items-center gap-1.5 truncate min-w-0">
                 <span
                   className="w-2 h-2 rounded-full inline-block flex-shrink-0"
                   style={{ backgroundColor: item.color }}
                 />
-                <span className="text-zinc-300 truncate font-medium">{item.name}</span>
+                <span
+                  className={`truncate font-medium ${
+                    isSelected ? "text-zinc-100 font-bold" : "text-zinc-300"
+                  }`}
+                >
+                  {item.name}
+                </span>
               </div>
-              <span className="text-zinc-400 font-mono text-[11px] ml-1 flex-shrink-0">
-                {percent}%
-              </span>
-            </div>
+              <div className="flex flex-col items-end flex-shrink-0 ml-1">
+                <span className="text-zinc-200 font-mono text-[11px] font-semibold">
+                  {formatINR(item.total)}
+                </span>
+                <span className="text-zinc-500 font-mono text-[10px]">
+                  {percent}%
+                </span>
+              </div>
+            </button>
           );
         })}
       </div>
