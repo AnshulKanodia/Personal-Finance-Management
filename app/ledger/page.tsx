@@ -20,14 +20,31 @@ import {
   FileText,
   Download,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { formatINR, formatDate } from "@/lib/utils";
-import { QuickDueModal } from "@/components/QuickDueModal";
-import { SettleUpModal } from "@/components/SettleUpModal";
-import { EditDueModal } from "@/components/EditDueModal";
-import { DownloadStatementModal } from "@/components/DownloadStatementModal";
 import { RupeeLoader } from "@/components/RupeeLoader";
-import { TripManager } from "@/components/TripManager";
 import { PrivacyMask } from "@/components/PrivacyMask";
+
+const QuickDueModal = dynamic(
+  () => import("@/components/QuickDueModal").then((mod) => mod.QuickDueModal),
+  { ssr: false }
+);
+const SettleUpModal = dynamic(
+  () => import("@/components/SettleUpModal").then((mod) => mod.SettleUpModal),
+  { ssr: false }
+);
+const EditDueModal = dynamic(
+  () => import("@/components/EditDueModal").then((mod) => mod.EditDueModal),
+  { ssr: false }
+);
+const DownloadStatementModal = dynamic(
+  () => import("@/components/DownloadStatementModal").then((mod) => mod.DownloadStatementModal),
+  { ssr: false }
+);
+const TripManager = dynamic(
+  () => import("@/components/TripManager").then((mod) => mod.TripManager),
+  { ssr: false }
+);
 
 import { getCached, setCached } from "@/lib/clientCache";
 

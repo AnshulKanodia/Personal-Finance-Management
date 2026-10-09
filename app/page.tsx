@@ -20,16 +20,37 @@ import {
   Edit2,
   Clock,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { StatCard } from "@/components/StatCard";
-import { SpendCategoryChart } from "@/components/SpendCategoryChart";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatINR, formatDate } from "@/lib/utils";
-import { QuickTransactionModal } from "@/components/QuickTransactionModal";
-import { QuickDueModal } from "@/components/QuickDueModal";
-import { EditTransactionModal } from "@/components/EditTransactionModal";
 import { RupeeLoader } from "@/components/RupeeLoader";
 import { SpendingVelocityCard } from "@/components/SpendingVelocityCard";
 import { PrivacyMask } from "@/components/PrivacyMask";
+
+const SpendCategoryChart = dynamic(
+  () => import("@/components/SpendCategoryChart").then((mod) => mod.SpendCategoryChart),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center p-8 rounded-2xl bg-zinc-900/60 border border-zinc-800 min-h-[300px]">
+        <RupeeLoader size="md" label="Loading analytics..." />
+      </div>
+    ),
+  }
+);
+const QuickTransactionModal = dynamic(
+  () => import("@/components/QuickTransactionModal").then((mod) => mod.QuickTransactionModal),
+  { ssr: false }
+);
+const QuickDueModal = dynamic(
+  () => import("@/components/QuickDueModal").then((mod) => mod.QuickDueModal),
+  { ssr: false }
+);
+const EditTransactionModal = dynamic(
+  () => import("@/components/EditTransactionModal").then((mod) => mod.EditTransactionModal),
+  { ssr: false }
+);
 import { usePreferences } from "@/lib/preferences";
 
 import { getCached, setCached } from "@/lib/clientCache";
