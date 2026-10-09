@@ -68,7 +68,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
             </div>
           </div>
           <div>
-            <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+            <span className="font-bold text-lg tracking-tight text-zinc-100 group-hover:text-white transition-colors">
               RupeePulse
             </span>
           </div>
