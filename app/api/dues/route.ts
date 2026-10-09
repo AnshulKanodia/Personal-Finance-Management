@@ -16,13 +16,25 @@ export async function GET(req: NextRequest) {
     const friendId = searchParams.get("friendId");
     const type = searchParams.get("type"); // TO_GIVE | TO_TAKE
     const isSettled = searchParams.get("isSettled");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const paymentMode = searchParams.get("paymentMode");
 
     const filter: Record<string, any> = {};
 
-    if (friendId) filter.friendId = friendId;
-    if (type) filter.type = type;
-    if (isSettled !== null && isSettled !== undefined) {
+    if (friendId && friendId !== "ALL") filter.friendId = friendId;
+    if (type && type !== "ALL") filter.type = type;
+    if (isSettled !== null && isSettled !== undefined && isSettled !== "ALL") {
       filter.isSettled = isSettled === "true";
+    }
+    if (paymentMode && paymentMode !== "ALL") {
+      filter.paymentMode = paymentMode;
+    }
+
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) filter.date.$lte = new Date(endDate);
     }
 
     const dues = await FriendDue.find(filter)

@@ -13,14 +13,21 @@ import {
   Sparkles,
   Loader2,
   Filter,
+  Users,
+  User,
 } from "lucide-react";
 import { formatINR, formatDate } from "@/lib/utils";
 import {
   exportStatementToPDF,
   exportStatementToExcel,
   exportStatementToCSV,
+  exportLedgerStatementToPDF,
+  exportLedgerStatementToExcel,
+  exportLedgerStatementToCSV,
   StatementTransaction,
   StatementSummary,
+  LedgerDueItem,
+  LedgerSummary,
 } from "@/lib/statementExporter";
 
 interface Category {
@@ -28,23 +35,43 @@ interface Category {
   name: string;
 }
 
+interface FriendItem {
+  _id: string;
+  name: string;
+  phone?: string;
+  netBalance?: number;
+}
+
 interface DownloadStatementModalProps {
   isOpen: boolean;
   onClose: () => void;
   categories?: Category[];
+  initialStatementType?: "PERSONAL" | "LEDGER";
+  initialFriendId?: string;
 }
 
 type PeriodType = "MONTH" | "WEEK" | "DAY" | "YEAR" | "CUSTOM";
 type ExportFormat = "PDF" | "EXCEL";
+type StatementScope = "PERSONAL" | "LEDGER";
 
 export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
   isOpen,
   onClose,
   categories = [],
+  initialStatementType = "PERSONAL",
+  initialFriendId,
 }) => {
   const now = new Date();
   const currentYearNum = now.getFullYear();
   const currentMonthNum = now.getMonth(); // 0-indexed
+
+  // Statement Scope: Personal Vault vs Friend Ledger
+  const [statementType, setStatementType] = useState<StatementScope>(initialStatementType);
+
+  // Friend Ledger specific states
+  const [friends, setFriends] = useState<FriendItem[]>([]);
+  const [selectedFriendId, setSelectedFriendId] = useState<string>(initialFriendId || "ALL");
+  const [dueStatusFilter, setDueStatusFilter] = useState<string>("ALL"); // ALL, UNSETTLED, SETTLED
 
   // Format selection
   const [format, setFormat] = useState<ExportFormat>("PDF");
@@ -76,7 +103,7 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
     now.toISOString().split("T")[0]
   );
 
-  // Optional filters
+  // Optional filters for Personal
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [modeFilter, setModeFilter] = useState<string>("ALL");
 
@@ -84,7 +111,37 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
   const [previewLoading, setPreviewLoading] = useState<boolean>(false);
   const [transactions, setTransactions] = useState<StatementTransaction[]>([]);
   const [summary, setSummary] = useState<StatementSummary | null>(null);
+
+  // Ledger preview state
+  const [dues, setDues] = useState<LedgerDueItem[]>([]);
+  const [ledgerSummary, setLedgerSummary] = useState<LedgerSummary | null>(null);
+
   const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // Reset or initialize on open
+  useEffect(() => {
+    if (isOpen) {
+      if (initialStatementType) {
+        setStatementType(initialStatementType);
+      }
+      if (initialFriendId) {
+        setSelectedFriendId(initialFriendId);
+      }
+      fetchFriends();
+    }
+  }, [isOpen, initialStatementType, initialFriendId]);
+
+  const fetchFriends = async () => {
+    try {
+      const res = await fetch("/api/friends");
+      const json = await res.json();
+      if (json.success) {
+        setFriends(json.data);
+      }
+    } catch (e) {
+      console.error("Failed to load friends list for statement", e);
+    }
+  };
 
   // Calculate start and end date objects based on selected period
   const getDateRange = useCallback((): { start: Date; end: Date; label: string } => {
@@ -162,51 +219,111 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
     customEndDate,
   ]);
 
-  // Fetch transactions preview for selected criteria
+  // Fetch Preview Data (Personal or Ledger)
   const fetchPreviewData = useCallback(async () => {
     if (!isOpen) return;
     try {
       setPreviewLoading(true);
       const { start, end, label } = getDateRange();
 
-      const params = new URLSearchParams();
-      params.append("limit", "0"); // fetch all records
-      params.append("startDate", start.toISOString());
-      params.append("endDate", end.toISOString());
+      if (statementType === "PERSONAL") {
+        const params = new URLSearchParams();
+        params.append("limit", "0");
+        params.append("startDate", start.toISOString());
+        params.append("endDate", end.toISOString());
 
-      if (categoryFilter !== "ALL") params.append("category", categoryFilter);
-      if (modeFilter !== "ALL") params.append("paymentMode", modeFilter);
+        if (categoryFilter !== "ALL") params.append("category", categoryFilter);
+        if (modeFilter !== "ALL") params.append("paymentMode", modeFilter);
 
-      const res = await fetch(`/api/transactions?${params.toString()}`);
-      const json = await res.json();
+        const res = await fetch(`/api/transactions?${params.toString()}`);
+        const json = await res.json();
 
-      if (json.success) {
-        const txs: StatementTransaction[] = json.data;
-        const totalExpense = txs
-          .filter((t) => t.type === "EXPENSE")
-          .reduce((sum, t) => sum + t.amount, 0);
-        const totalIncome = txs
-          .filter((t) => t.type === "INCOME")
-          .reduce((sum, t) => sum + t.amount, 0);
-        const netCashflow = totalIncome - totalExpense;
+        if (json.success) {
+          const txs: StatementTransaction[] = json.data;
+          const totalExpense = txs
+            .filter((t) => t.type === "EXPENSE")
+            .reduce((sum, t) => sum + t.amount, 0);
+          const totalIncome = txs
+            .filter((t) => t.type === "INCOME")
+            .reduce((sum, t) => sum + t.amount, 0);
+          const netCashflow = totalIncome - totalExpense;
 
-        setTransactions(txs);
-        setSummary({
-          periodLabel: label,
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
-          totalIncome,
-          totalExpense,
-          netCashflow,
-          totalCount: txs.length,
-        });
+          setTransactions(txs);
+          setSummary({
+            periodLabel: label,
+            startDate: start.toISOString(),
+            endDate: end.toISOString(),
+            totalIncome,
+            totalExpense,
+            netCashflow,
+            totalCount: txs.length,
+          });
+        }
+      } else {
+        // Friend Ledger Mode
+        const params = new URLSearchParams();
+        params.append("startDate", start.toISOString());
+        params.append("endDate", end.toISOString());
+
+        if (selectedFriendId && selectedFriendId !== "ALL") {
+          params.append("friendId", selectedFriendId);
+        }
+        if (dueStatusFilter === "UNSETTLED") {
+          params.append("isSettled", "false");
+        } else if (dueStatusFilter === "SETTLED") {
+          params.append("isSettled", "true");
+        }
+        if (modeFilter !== "ALL") {
+          params.append("paymentMode", modeFilter);
+        }
+
+        const res = await fetch(`/api/dues?${params.toString()}`);
+        const json = await res.json();
+
+        if (json.success) {
+          const duesData: LedgerDueItem[] = json.data;
+          const totalToTake = duesData
+            .filter((d) => d.type === "TO_TAKE")
+            .reduce((sum, d) => sum + d.amount, 0);
+          const totalToGive = duesData
+            .filter((d) => d.type === "TO_GIVE")
+            .reduce((sum, d) => sum + d.amount, 0);
+          const netBalance = totalToTake - totalToGive;
+
+          const friendObj = friends.find((f) => f._id === selectedFriendId);
+          const friendDisplayName =
+            selectedFriendId === "ALL"
+              ? "All Friends"
+              : friendObj?.name || "Selected Friend";
+
+          setDues(duesData);
+          setLedgerSummary({
+            periodLabel: label,
+            friendName: friendDisplayName,
+            totalToTake,
+            totalToGive,
+            netBalance,
+            totalCount: duesData.length,
+            unsettledCount: duesData.filter((d) => !d.isSettled).length,
+            settledCount: duesData.filter((d) => d.isSettled).length,
+          });
+        }
       }
     } catch (e) {
       console.error("Failed to load preview data", e);
     } finally {
       setPreviewLoading(false);
     }
-  }, [isOpen, getDateRange, categoryFilter, modeFilter]);
+  }, [
+    isOpen,
+    statementType,
+    getDateRange,
+    categoryFilter,
+    modeFilter,
+    selectedFriendId,
+    dueStatusFilter,
+    friends,
+  ]);
 
   useEffect(() => {
     if (isOpen) {
@@ -217,25 +334,51 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
   if (!isOpen) return null;
 
   const handleDownload = async () => {
-    if (!summary || transactions.length === 0) return;
     try {
       setIsExporting(true);
-      const sanitizedLabel = summary.periodLabel
-        .replace(/[^a-zA-Z0-9_-]/g, "_")
-        .replace(/_+/g, "_");
 
-      if (format === "PDF") {
-        exportStatementToPDF(
-          transactions,
-          summary,
-          `RupeePulse_Statement_${sanitizedLabel}.pdf`
-        );
+      if (statementType === "PERSONAL") {
+        if (!summary || transactions.length === 0) return;
+        const sanitizedLabel = summary.periodLabel
+          .replace(/[^a-zA-Z0-9_-]/g, "_")
+          .replace(/_+/g, "_");
+
+        if (format === "PDF") {
+          exportStatementToPDF(
+            transactions,
+            summary,
+            `RupeePulse_Statement_${sanitizedLabel}.pdf`
+          );
+        } else {
+          exportStatementToExcel(
+            transactions,
+            summary,
+            `RupeePulse_Statement_${sanitizedLabel}.xlsx`
+          );
+        }
       } else {
-        exportStatementToExcel(
-          transactions,
-          summary,
-          `RupeePulse_Statement_${sanitizedLabel}.xlsx`
-        );
+        // Ledger Export
+        if (!ledgerSummary || dues.length === 0) return;
+        const sanitizedFriend = ledgerSummary.friendName
+          .replace(/[^a-zA-Z0-9_-]/g, "_")
+          .replace(/_+/g, "_");
+        const sanitizedLabel = ledgerSummary.periodLabel
+          .replace(/[^a-zA-Z0-9_-]/g, "_")
+          .replace(/_+/g, "_");
+
+        if (format === "PDF") {
+          exportLedgerStatementToPDF(
+            dues,
+            ledgerSummary,
+            `RupeePulse_Ledger_${sanitizedFriend}_${sanitizedLabel}.pdf`
+          );
+        } else {
+          exportLedgerStatementToExcel(
+            dues,
+            ledgerSummary,
+            `RupeePulse_Ledger_${sanitizedFriend}_${sanitizedLabel}.xlsx`
+          );
+        }
       }
       onClose();
     } catch (e) {
@@ -253,6 +396,8 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
 
   const years = [currentYearNum - 2, currentYearNum - 1, currentYearNum, currentYearNum + 1];
 
+  const currentFriendObj = friends.find((f) => f._id === selectedFriendId);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg rounded-3xl bg-zinc-950 border border-zinc-800/90 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
@@ -269,7 +414,7 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
                 <span>Download Statement</span>
               </h3>
               <p className="text-xs text-zinc-400 mt-0.5">
-                Generate an official PDF or Excel statement of your transactions
+                Generate an official PDF or Excel statement
               </p>
             </div>
           </div>
@@ -284,6 +429,40 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1 custom-scrollbar">
+          {/* Statement Scope Selector: Personal vs Friend Ledger */}
+          <div>
+            <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
+              Statement Type
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-900/80 rounded-2xl border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setStatementType("PERSONAL")}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  statementType === "PERSONAL"
+                    ? "bg-zinc-800 text-emerald-400 border border-emerald-500/30 shadow-inner"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Personal Vault</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setStatementType("LEDGER")}
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                  statementType === "LEDGER"
+                    ? "bg-zinc-800 text-sky-400 border border-sky-500/30 shadow-inner"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 text-sky-400" />
+                <span>Friend Ledger</span>
+              </button>
+            </div>
+          </div>
+
           {/* 1. Format Selection */}
           <div>
             <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
@@ -337,6 +516,54 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
               </button>
             </div>
           </div>
+
+          {/* If Friend Ledger: Friend Selection Dropdown */}
+          {statementType === "LEDGER" && (
+            <div className="p-3.5 rounded-2xl bg-zinc-900/50 border border-sky-500/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-semibold text-zinc-300">
+                  Select Friend Contact
+                </label>
+                <span className="text-[10px] font-mono text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
+                  {selectedFriendId === "ALL" ? "All Contacts" : currentFriendObj?.name || "Single Contact"}
+                </span>
+              </div>
+              <select
+                value={selectedFriendId}
+                onChange={(e) => setSelectedFriendId(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-100 focus:outline-none focus:border-sky-500/60"
+              >
+                <option value="ALL">All Friends (Combined Ledger)</option>
+                {friends.map((f) => (
+                  <option key={f._id} value={f._id}>
+                    {f.name} {f.phone ? `(${f.phone})` : ""}
+                  </option>
+                ))}
+              </select>
+
+              {/* Status Filter: All / Unsettled / Settled */}
+              <div className="grid grid-cols-3 gap-1.5 pt-1">
+                {[
+                  { id: "ALL", label: "All Entries" },
+                  { id: "UNSETTLED", label: "Active Dues" },
+                  { id: "SETTLED", label: "Settled Only" },
+                ].map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setDueStatusFilter(s.id)}
+                    className={`py-1.5 px-2 rounded-lg text-[11px] font-semibold border transition-all text-center ${
+                      dueStatusFilter === s.id
+                        ? "bg-sky-500/20 border-sky-500/50 text-sky-300"
+                        : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-700"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 2. Date Range Scope (Month, Week, Day, Year, Custom) */}
           <div>
@@ -494,36 +721,42 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
             </div>
           </div>
 
-          {/* 3. Optional Filter Narrowing (Category & Mode) */}
+          {/* 3. Filter Options (Personal or Ledger) */}
           <div className="grid grid-cols-2 gap-2.5">
-            <div>
-              <label className="block text-[11px] font-medium text-zinc-400 mb-1">Category (Optional)</label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 focus:outline-none focus:border-emerald-500/50"
-              >
-                <option value="ALL">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {statementType === "PERSONAL" ? (
+              <div>
+                <label className="block text-[11px] font-medium text-zinc-400 mb-1">Category (Optional)</label>
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 focus:outline-none focus:border-emerald-500/50"
+                >
+                  <option value="ALL">All Categories</option>
+                  {categories.map((c) => (
+                    <option key={c._id} value={c._id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
 
-            <div>
-              <label className="block text-[11px] font-medium text-zinc-400 mb-1">Payment Mode (Optional)</label>
+            <div className={statementType === "LEDGER" ? "col-span-2" : ""}>
+              <label className="block text-[11px] font-medium text-zinc-400 mb-1">Payment Channel (Optional)</label>
               <select
                 value={modeFilter}
                 onChange={(e) => setModeFilter(e.target.value)}
                 className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-semibold text-zinc-300 focus:outline-none focus:border-emerald-500/50"
               >
                 <option value="ALL">All Payment Channels</option>
-                <option value="UPI">UPI</option>
+                <option value="UPI">UPI Transfer</option>
                 <option value="CASH">Cash</option>
-                <option value="CARD">Card</option>
-                <option value="NET_BANKING">Net Banking</option>
+                {statementType === "PERSONAL" && (
+                  <>
+                    <option value="CARD">Card</option>
+                    <option value="NET_BANKING">Net Banking</option>
+                  </>
+                )}
               </select>
             </div>
           </div>
@@ -532,7 +765,7 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
           <div className="p-3.5 sm:p-4 rounded-2xl bg-zinc-900/70 border border-zinc-800 relative overflow-hidden">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">
-                Statement Data Preview
+                {statementType === "PERSONAL" ? "Personal Statement Preview" : "Friend Ledger Passbook Preview"}
               </span>
               {previewLoading ? (
                 <div className="flex items-center gap-1 text-[10px] text-emerald-400">
@@ -541,12 +774,15 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
                 </div>
               ) : (
                 <span className="text-[11px] font-mono text-emerald-400 font-bold">
-                  {summary ? `${summary.totalCount} transactions found` : "0 records"}
+                  {statementType === "PERSONAL"
+                    ? summary ? `${summary.totalCount} transactions found` : "0 records"
+                    : ledgerSummary ? `${ledgerSummary.totalCount} dues found` : "0 records"}
                 </span>
               )}
             </div>
 
-            {summary ? (
+            {/* Personal Statement Preview Metrics */}
+            {statementType === "PERSONAL" && summary && (
               <div className="grid grid-cols-3 gap-2 text-center pt-1 border-t border-zinc-850">
                 <div>
                   <span className="text-[10px] text-zinc-500 block">Total Outflow</span>
@@ -572,7 +808,36 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
                   </span>
                 </div>
               </div>
-            ) : null}
+            )}
+
+            {/* Friend Ledger Preview Metrics */}
+            {statementType === "LEDGER" && ledgerSummary && (
+              <div className="grid grid-cols-3 gap-2 text-center pt-1 border-t border-zinc-850">
+                <div>
+                  <span className="text-[10px] text-zinc-500 block">To Take (Lent)</span>
+                  <span className="text-xs sm:text-sm font-black font-mono text-emerald-400">
+                    +{formatINR(ledgerSummary.totalToTake)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-500 block">To Give (Owe)</span>
+                  <span className="text-xs sm:text-sm font-black font-mono text-rose-400">
+                    -{formatINR(ledgerSummary.totalToGive)}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-zinc-500 block">Net Balance</span>
+                  <span
+                    className={`text-xs sm:text-sm font-black font-mono ${
+                      ledgerSummary.netBalance >= 0 ? "text-emerald-400" : "text-rose-400"
+                    }`}
+                  >
+                    {ledgerSummary.netBalance >= 0 ? "+" : ""}
+                    {formatINR(ledgerSummary.netBalance)}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -589,7 +854,11 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
           <button
             type="button"
             onClick={handleDownload}
-            disabled={previewLoading || isExporting || transactions.length === 0}
+            disabled={
+              previewLoading ||
+              isExporting ||
+              (statementType === "PERSONAL" ? transactions.length === 0 : dues.length === 0)
+            }
             className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-sky-400 hover:from-emerald-400 hover:to-sky-300 text-zinc-950 font-bold text-xs sm:text-sm shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all active:scale-95 disabled:opacity-40 disabled:pointer-events-none"
           >
             {isExporting ? (
@@ -600,7 +869,10 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
             ) : (
               <>
                 <Download className="w-4 h-4 stroke-[2.5]" />
-                <span>Download {format === "PDF" ? "PDF Statement" : format === "EXCEL" ? "Excel Spreadsheet" : "CSV Statement"}</span>
+                <span>
+                  Download {statementType === "LEDGER" ? "Ledger " : ""}
+                  {format === "PDF" ? "PDF Statement" : "Excel Spreadsheet"}
+                </span>
               </>
             )}
           </button>

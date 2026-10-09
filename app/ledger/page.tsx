@@ -16,10 +16,15 @@ import {
   ChevronDown,
   ChevronUp,
   Filter,
+  Edit2,
+  FileText,
+  Download,
 } from "lucide-react";
 import { formatINR, formatDate } from "@/lib/utils";
 import { QuickDueModal } from "@/components/QuickDueModal";
 import { SettleUpModal } from "@/components/SettleUpModal";
+import { EditDueModal } from "@/components/EditDueModal";
+import { DownloadStatementModal } from "@/components/DownloadStatementModal";
 import { RupeeLoader } from "@/components/RupeeLoader";
 import { TripManager } from "@/components/TripManager";
 import { PrivacyMask } from "@/components/PrivacyMask";
@@ -66,6 +71,9 @@ export default function LedgerPage() {
   const [preselectedFriendId, setPreselectedFriendId] = useState<string | undefined>(undefined);
   const [settleFriend, setSettleFriend] = useState<Friend | null>(null);
   const [expandedFriendId, setExpandedFriendId] = useState<string | null>(null);
+  const [editingDue, setEditingDue] = useState<DueItem | null>(null);
+  const [statementModalOpen, setStatementModalOpen] = useState(false);
+  const [statementFriendId, setStatementFriendId] = useState<string | undefined>(undefined);
 
   const fetchData = useCallback(async (isSilent = false) => {
     try {
@@ -167,6 +175,18 @@ export default function LedgerPage() {
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={() => {
+              setStatementFriendId(undefined);
+              setStatementModalOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-zinc-100 font-bold text-xs sm:text-sm shadow-inner transition-all active:scale-95"
+            title="Download Friend Ledger statement"
+          >
+            <Download className="w-4 h-4 text-sky-400" />
+            <span>Statement</span>
+          </button>
+
           <button
             onClick={() => {
               setPreselectedFriendId(undefined);
@@ -360,6 +380,18 @@ export default function LedgerPage() {
 
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => {
+                            setStatementFriendId(friend._id);
+                            setStatementModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-sky-300 hover:bg-zinc-800 text-xs flex items-center gap-1 transition-colors"
+                          title={`Download statement for ${friend.name}`}
+                        >
+                          <FileText className="w-3.5 h-3.5 text-sky-400" />
+                          <span className="hidden sm:inline">Statement</span>
+                        </button>
+
+                        <button
                           onClick={() =>
                             setExpandedFriendId(isExpanded ? null : friend._id)
                           }
@@ -396,7 +428,7 @@ export default function LedgerPage() {
                           friendDues.map((d) => (
                             <div
                               key={d._id}
-                              className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs"
+                              className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs hover:border-zinc-700 transition-colors"
                             >
                               <div>
                                 <div className="text-zinc-200 font-medium">
@@ -420,16 +452,25 @@ export default function LedgerPage() {
                                   </span>
                                 </div>
                               </div>
-                              <span
-                                className={`font-mono font-bold text-sm ${
-                                  d.type === "TO_TAKE"
-                                    ? "text-rose-400"
-                                    : "text-emerald-400"
-                                }`}
-                              >
-                                {d.type === "TO_TAKE" ? "+" : "-"}
-                                {formatINR(d.amount)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`font-mono font-bold text-sm ${
+                                    d.type === "TO_TAKE"
+                                      ? "text-rose-400"
+                                      : "text-emerald-400"
+                                  }`}
+                                >
+                                  {d.type === "TO_TAKE" ? "+" : "-"}
+                                  {formatINR(d.amount)}
+                                </span>
+                                <button
+                                  onClick={() => setEditingDue(d)}
+                                  className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                                  title="Edit entry"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                           ))
                         )}
@@ -526,6 +567,18 @@ export default function LedgerPage() {
 
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => {
+                            setStatementFriendId(friend._id);
+                            setStatementModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg text-zinc-400 hover:text-sky-300 hover:bg-zinc-800 text-xs flex items-center gap-1 transition-colors"
+                          title={`Download statement for ${friend.name}`}
+                        >
+                          <FileText className="w-3.5 h-3.5 text-sky-400" />
+                          <span className="hidden sm:inline">Statement</span>
+                        </button>
+
+                        <button
                           onClick={() =>
                             setExpandedFriendId(isExpanded ? null : friend._id)
                           }
@@ -562,7 +615,7 @@ export default function LedgerPage() {
                           friendDues.map((d) => (
                             <div
                               key={d._id}
-                              className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs"
+                              className="p-2.5 rounded-lg bg-zinc-950/70 border border-zinc-850 flex items-center justify-between text-xs hover:border-zinc-700 transition-colors"
                             >
                               <div>
                                 <div className="text-zinc-200 font-medium">
@@ -586,16 +639,25 @@ export default function LedgerPage() {
                                   </span>
                                 </div>
                               </div>
-                              <span
-                                className={`font-mono font-bold text-sm ${
-                                  d.type === "TO_TAKE"
-                                    ? "text-rose-400"
-                                    : "text-emerald-400"
-                                }`}
-                              >
-                                {d.type === "TO_TAKE" ? "+" : "-"}
-                                {formatINR(d.amount)}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`font-mono font-bold text-sm ${
+                                    d.type === "TO_TAKE"
+                                      ? "text-rose-400"
+                                      : "text-emerald-400"
+                                  }`}
+                                >
+                                  {d.type === "TO_TAKE" ? "+" : "-"}
+                                  {formatINR(d.amount)}
+                                </span>
+                                <button
+                                  onClick={() => setEditingDue(d)}
+                                  className="p-1 rounded-md text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                                  title="Edit entry"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
                             </div>
                           ))
                         )}
@@ -723,17 +785,26 @@ export default function LedgerPage() {
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <div
-                          className={`text-base sm:text-lg font-black font-mono tracking-tight ${
-                            isTake ? "text-zinc-300 line-through" : "text-zinc-300 line-through"
-                          }`}
-                        >
-                          {formatINR(item.amount)}
+                      <div className="flex items-center gap-2.5">
+                        <div className="text-right">
+                          <div
+                            className={`text-base sm:text-lg font-black font-mono tracking-tight ${
+                              isTake ? "text-zinc-300 line-through" : "text-zinc-300 line-through"
+                            }`}
+                          >
+                            {formatINR(item.amount)}
+                          </div>
+                          <span className="text-[10px] text-emerald-400 font-semibold block mt-0.5">
+                            Cleared to ₹0
+                          </span>
                         </div>
-                        <span className="text-[10px] text-emerald-400 font-semibold block mt-0.5">
-                          Cleared to ₹0
-                        </span>
+                        <button
+                          onClick={() => setEditingDue(item)}
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
+                          title="Edit or un-settle record"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
                   );
@@ -764,6 +835,29 @@ export default function LedgerPage() {
         friend={settleFriend}
         onClose={() => setSettleFriend(null)}
         onSuccess={() => fetchData()}
+      />
+
+      {/* Edit Due Modal */}
+      <EditDueModal
+        isOpen={editingDue !== null}
+        due={editingDue}
+        friends={friends}
+        onClose={() => setEditingDue(null)}
+        onSuccess={() => {
+          setEditingDue(null);
+          fetchData();
+        }}
+      />
+
+      {/* Download Statement Modal */}
+      <DownloadStatementModal
+        isOpen={statementModalOpen}
+        onClose={() => {
+          setStatementModalOpen(false);
+          setStatementFriendId(undefined);
+        }}
+        initialStatementType="LEDGER"
+        initialFriendId={statementFriendId}
       />
     </div>
   );

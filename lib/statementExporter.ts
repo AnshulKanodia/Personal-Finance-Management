@@ -397,3 +397,353 @@ export function exportStatementToCSV(
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+export interface LedgerDueItem {
+  _id: string;
+  date: string;
+  friendId?: {
+    _id?: string;
+    name: string;
+    phone?: string;
+  } | string;
+  type: "TO_GIVE" | "TO_TAKE";
+  amount: number;
+  paymentMode: "UPI" | "CASH" | string;
+  notes?: string;
+  isSettled: boolean;
+  settledAt?: string;
+}
+
+export interface LedgerSummary {
+  periodLabel: string;
+  friendName: string;
+  totalToTake: number;
+  totalToGive: number;
+  netBalance: number;
+  totalCount: number;
+  unsettledCount: number;
+  settledCount: number;
+}
+
+function getFriendName(due: LedgerDueItem): string {
+  if (!due.friendId) return "Unknown";
+  if (typeof due.friendId === "string") return due.friendId;
+  return due.friendId.name || "Unknown";
+}
+
+/**
+ * Generates an executive-grade PDF statement for Friend Ledger Passbook
+ */
+export function exportLedgerStatementToPDF(
+  dues: LedgerDueItem[],
+  summary: LedgerSummary,
+  filename?: string
+): void {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // 1. Top Decorative Brand Bar
+  doc.setFillColor(15, 23, 42); // slate-900
+  doc.rect(0, 0, pageWidth, 38, "F");
+
+  // Accent Line (Emerald & Sky gradient feel)
+  doc.setFillColor(14, 165, 233); // sky-500
+  doc.rect(0, 37, pageWidth, 1.5, "F");
+
+  // Brand Name & Title
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("RupeePulse Friend Ledger", 14, 16);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(148, 163, 184); // slate-400
+  doc.text(`Bilateral Passbook Statement • Contact: ${summary.friendName}`, 14, 23);
+  doc.text(`Generated: ${new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}`, 14, 29);
+
+  // Period Badge on top right
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(56, 189, 248); // sky-400
+  doc.text(`Period: ${summary.periodLabel}`, pageWidth - 14, 18, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(148, 163, 184);
+  doc.text(`Passbook Audit • Bilateral Account`, pageWidth - 14, 25, { align: "right" });
+
+  // 2. Executive 4-Metric Summary Cards
+  const cardY = 44;
+  const cardHeight = 18;
+  const marginX = 14;
+  const gap = 3.5;
+  const cardWidth = (pageWidth - marginX * 2 - gap * 3) / 4;
+
+  const cards = [
+    {
+      title: "TOTAL TO TAKE (+)",
+      value: `Rs. ${summary.totalToTake.toLocaleString("en-IN")}`,
+      color: [5, 150, 105], // emerald-600
+      bg: [236, 253, 245], // emerald-50
+      border: [167, 243, 208],
+    },
+    {
+      title: "TOTAL TO GIVE (-)",
+      value: `Rs. ${summary.totalToGive.toLocaleString("en-IN")}`,
+      color: [225, 29, 72], // rose-600
+      bg: [255, 241, 242], // rose-50
+      border: [254, 205, 211],
+    },
+    {
+      title: "NET POSITION",
+      value: `${summary.netBalance >= 0 ? "+" : "-"}Rs. ${Math.abs(summary.netBalance).toLocaleString("en-IN")}`,
+      color: summary.netBalance >= 0 ? [5, 150, 105] : [225, 29, 72],
+      bg: summary.netBalance >= 0 ? [236, 253, 245] : [255, 241, 242],
+      border: summary.netBalance >= 0 ? [167, 243, 208] : [254, 205, 211],
+    },
+    {
+      title: "LINE ENTRIES",
+      value: `${summary.totalCount} (${summary.unsettledCount} active)`,
+      color: [15, 23, 42],
+      bg: [248, 250, 252],
+      border: [226, 232, 240],
+    },
+  ];
+
+  cards.forEach((c, i) => {
+    const x = marginX + i * (cardWidth + gap);
+    doc.setFillColor(c.bg[0], c.bg[1], c.bg[2]);
+    doc.setDrawColor(c.border[0], c.border[1], c.border[2]);
+    doc.roundedRect(x, cardY, cardWidth, cardHeight, 2, 2, "FD");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6.5);
+    doc.setTextColor(100, 116, 139);
+    doc.text(c.title, x + 3.5, cardY + 6);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(c.color[0], c.color[1], c.color[2]);
+    doc.text(c.value, x + 3.5, cardY + 13);
+  });
+
+  // 3. Ledger Table
+  const tableData = dues.map((d) => {
+    const isTake = d.type === "TO_TAKE";
+    const dateFormatted = formatDate(d.date);
+    const friend = getFriendName(d);
+    const mode = formatPaymentMode(d.paymentMode);
+    const action = isTake ? "You Lent / Spent (+)" : "Friend Deposited (-)";
+    const toTakeAmt = isTake ? `Rs. ${d.amount.toLocaleString("en-IN")}` : "-";
+    const toGiveAmt = !isTake ? `Rs. ${d.amount.toLocaleString("en-IN")}` : "-";
+    const status = d.isSettled ? "Settled" : "Active";
+    const notes = d.notes ? d.notes.trim() : "-";
+
+    return [dateFormatted, friend, action, mode, toTakeAmt, toGiveAmt, status, notes];
+  });
+
+  const autoTableFn = (autoTable as any).default || autoTable;
+
+  autoTableFn(doc, {
+    startY: 68,
+    head: [["Date", "Contact", "Action / Type", "Channel", "To Take (+)", "To Give (-)", "Status", "Notes / Purpose"]],
+    body: tableData,
+    theme: "striped",
+    margin: { left: 14, right: 14, bottom: 20 },
+    styles: {
+      fontSize: 8,
+      cellPadding: 2.2,
+      font: "helvetica",
+      textColor: [30, 41, 59],
+      lineColor: [226, 232, 240],
+      lineWidth: 0.1,
+    },
+    headStyles: {
+      fillColor: [15, 23, 42],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 8,
+      halign: "left",
+    },
+    columnStyles: {
+      0: { cellWidth: 22 }, // Date
+      1: { cellWidth: 22, fontStyle: "bold" }, // Contact
+      2: { cellWidth: 28 }, // Action
+      3: { cellWidth: 16 }, // Channel
+      4: { cellWidth: 22, halign: "right", textColor: [5, 150, 105] }, // To Take
+      5: { cellWidth: 22, halign: "right", textColor: [225, 29, 72] }, // To Give
+      6: { cellWidth: 16, halign: "center" }, // Status
+      7: { cellWidth: "auto" }, // Notes
+    },
+    alternateRowStyles: {
+      fillColor: [248, 250, 252],
+    },
+    didDrawPage: (data: any) => {
+      const current = data.pageNumber;
+      const total = doc.getNumberOfPages();
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(7.5);
+      doc.setTextColor(148, 163, 184);
+
+      doc.setDrawColor(226, 232, 240);
+      doc.line(14, pageHeight - 12, pageWidth - 14, pageHeight - 12);
+
+      doc.text("RupeePulse Vault • Bilateral Friend Ledger Audit Statement", 14, pageHeight - 7);
+      doc.text(`Page ${current} of ${total}`, pageWidth - 14, pageHeight - 7, { align: "right" });
+    },
+  });
+
+  const finalName = filename || `RupeePulse_Ledger_${summary.friendName.replace(/\s+/g, "_")}.pdf`;
+  doc.save(finalName);
+}
+
+/**
+ * Generates an Excel spreadsheet (.xlsx) for Friend Ledger
+ */
+export function exportLedgerStatementToExcel(
+  dues: LedgerDueItem[],
+  summary: LedgerSummary,
+  filename?: string
+): void {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Ledger Entries
+  const sheetRows: any[] = [
+    ["RupeePulse Friend Ledger Statement"],
+    [`Contact: ${summary.friendName}`],
+    [`Period: ${summary.periodLabel}`],
+    [`Generated: ${new Date().toLocaleString("en-IN")}`],
+    [
+      `Total To Take: Rs. ${summary.totalToTake}`,
+      `Total To Give: Rs. ${summary.totalToGive}`,
+      `Net Position: Rs. ${summary.netBalance}`,
+      `Total Records: ${summary.totalCount}`,
+    ],
+    [],
+    ["Date", "Contact", "Action", "Payment Mode", "To Take (Owed to You)", "To Give (You Owe)", "Amount (INR)", "Status", "Settled Date", "Notes / Purpose"],
+  ];
+
+  dues.forEach((d) => {
+    const isTake = d.type === "TO_TAKE";
+    sheetRows.push([
+      formatDate(d.date),
+      getFriendName(d),
+      isTake ? "You Lent / Spent" : "Friend Deposited",
+      formatPaymentMode(d.paymentMode),
+      isTake ? d.amount : "",
+      !isTake ? d.amount : "",
+      d.amount,
+      d.isSettled ? "Settled" : "Active",
+      d.settledAt ? formatDate(d.settledAt) : "-",
+      d.notes || "",
+    ]);
+  });
+
+  // Summary Total Row
+  sheetRows.push([]);
+  sheetRows.push([
+    "TOTAL",
+    "",
+    "",
+    "",
+    summary.totalToTake,
+    summary.totalToGive,
+    summary.netBalance,
+    "",
+    "",
+    "",
+  ]);
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetRows);
+  ws["!cols"] = [
+    { wch: 14 }, // Date
+    { wch: 18 }, // Contact
+    { wch: 20 }, // Action
+    { wch: 15 }, // Payment Mode
+    { wch: 18 }, // To Take
+    { wch: 18 }, // To Give
+    { wch: 16 }, // Amount
+    { wch: 12 }, // Status
+    { wch: 14 }, // Settled Date
+    { wch: 35 }, // Notes
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, "Ledger Passbook");
+
+  // Sheet 2: Friend Reconciliation Summary
+  const friendStats: Record<string, { toTake: number; toGive: number; count: number }> = {};
+  dues.forEach((d) => {
+    const fName = getFriendName(d);
+    if (!friendStats[fName]) friendStats[fName] = { toTake: 0, toGive: 0, count: 0 };
+    if (d.type === "TO_TAKE") friendStats[fName].toTake += d.amount;
+    else friendStats[fName].toGive += d.amount;
+    friendStats[fName].count += 1;
+  });
+
+  const reconRows: any[] = [
+    ["Friend Passbook Reconciliation Summary"],
+    [`Period: ${summary.periodLabel}`],
+    [],
+    ["Friend Name", "Total To Take (INR)", "Total To Give (INR)", "Net Balance (INR)", "Status", "Total Entries"],
+  ];
+
+  Object.entries(friendStats).forEach(([name, stat]) => {
+    const net = stat.toTake - stat.toGive;
+    const status = net > 0 ? "Owes You" : net < 0 ? "You Owe" : "All Squared Off";
+    reconRows.push([name, stat.toTake, stat.toGive, net, status, stat.count]);
+  });
+
+  const wsRecon = XLSX.utils.aoa_to_sheet(reconRows);
+  wsRecon["!cols"] = [{ wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 18 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, wsRecon, "Reconciliation");
+
+  const finalName = filename || `RupeePulse_Ledger_${summary.friendName.replace(/\s+/g, "_")}.xlsx`;
+  XLSX.writeFile(wb, finalName);
+}
+
+/**
+ * Generates a clean UTF-8 CSV statement for Friend Ledger
+ */
+export function exportLedgerStatementToCSV(
+  dues: LedgerDueItem[],
+  summary: LedgerSummary,
+  filename?: string
+): void {
+  const headers = ["Date", "Contact", "Action", "Payment Mode", "To Take (Owed to You)", "To Give (You Owe)", "Amount (INR)", "Status", "Notes / Purpose"];
+  const rows = dues.map((d) => {
+    const isTake = d.type === "TO_TAKE";
+    const toTake = isTake ? d.amount : "";
+    const toGive = !isTake ? d.amount : "";
+    const cleanNotes = (d.notes || "").replace(/"/g, '""');
+    return [
+      `"${formatDate(d.date)}"`,
+      `"${getFriendName(d).replace(/"/g, '""')}"`,
+      `"${isTake ? "You Lent / Spent" : "Friend Deposited"}"`,
+      `"${formatPaymentMode(d.paymentMode)}"`,
+      toTake,
+      toGive,
+      d.amount,
+      `"${d.isSettled ? "Settled" : "Active"}"`,
+      `"${cleanNotes}"`,
+    ].join(",");
+  });
+
+  const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename || `RupeePulse_Ledger_${summary.friendName.replace(/\s+/g, "_")}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
