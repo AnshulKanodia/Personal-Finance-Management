@@ -50,7 +50,7 @@ interface DownloadStatementModalProps {
   initialFriendId?: string;
 }
 
-type PeriodType = "MONTH" | "WEEK" | "DAY" | "YEAR" | "CUSTOM";
+type PeriodType = "ALL" | "MONTH" | "WEEK" | "DAY" | "YEAR" | "CUSTOM";
 type ExportFormat = "PDF" | "EXCEL";
 type StatementScope = "PERSONAL" | "LEDGER";
 
@@ -76,8 +76,10 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
   // Format selection
   const [format, setFormat] = useState<ExportFormat>("PDF");
 
-  // Period type
-  const [periodType, setPeriodType] = useState<PeriodType>("MONTH");
+  // Period type: defaults to ALL for Friend Ledger passbook, MONTH for Personal Vault
+  const [periodType, setPeriodType] = useState<PeriodType>(
+    initialStatementType === "LEDGER" ? "ALL" : "MONTH"
+  );
 
   // Month selector
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonthNum);
@@ -123,9 +125,17 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
     if (isOpen) {
       if (initialStatementType) {
         setStatementType(initialStatementType);
+        if (initialStatementType === "LEDGER") {
+          setPeriodType("ALL");
+          setDueStatusFilter("ALL");
+        } else {
+          setPeriodType("MONTH");
+        }
       }
       if (initialFriendId) {
         setSelectedFriendId(initialFriendId);
+        setPeriodType("ALL");
+        setDueStatusFilter("ALL");
       }
       fetchFriends();
     }
@@ -145,6 +155,12 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
 
   // Calculate start and end date objects based on selected period
   const getDateRange = useCallback((): { start: Date; end: Date; label: string } => {
+    if (periodType === "ALL") {
+      const start = new Date(0);
+      const end = new Date(Date.now() + 86400000);
+      return { start, end, label: "All Time (Complete History)" };
+    }
+
     if (periodType === "MONTH") {
       const start = new Date(selectedMonthYear, selectedMonth, 1, 0, 0, 0, 0);
       const end = new Date(selectedMonthYear, selectedMonth + 1, 0, 23, 59, 59, 999);
@@ -229,8 +245,10 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
       if (statementType === "PERSONAL") {
         const params = new URLSearchParams();
         params.append("limit", "0");
-        params.append("startDate", start.toISOString());
-        params.append("endDate", end.toISOString());
+        if (periodType !== "ALL") {
+          params.append("startDate", start.toISOString());
+          params.append("endDate", end.toISOString());
+        }
 
         if (categoryFilter !== "ALL") params.append("category", categoryFilter);
         if (modeFilter !== "ALL") params.append("paymentMode", modeFilter);
@@ -251,8 +269,8 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
           setTransactions(txs);
           setSummary({
             periodLabel: label,
-            startDate: start.toISOString(),
-            endDate: end.toISOString(),
+            startDate: periodType === "ALL" ? "" : start.toISOString(),
+            endDate: periodType === "ALL" ? "" : end.toISOString(),
             totalIncome,
             totalExpense,
             netCashflow,
@@ -262,8 +280,10 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
       } else {
         // Friend Ledger Mode
         const params = new URLSearchParams();
-        params.append("startDate", start.toISOString());
-        params.append("endDate", end.toISOString());
+        if (periodType !== "ALL") {
+          params.append("startDate", start.toISOString());
+          params.append("endDate", end.toISOString());
+        }
 
         if (selectedFriendId && selectedFriendId !== "ALL") {
           params.append("friendId", selectedFriendId);
@@ -432,7 +452,10 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
           <div className="grid grid-cols-2 gap-2 p-1 bg-zinc-900 rounded-2xl border border-zinc-800">
             <button
               type="button"
-              onClick={() => setStatementType("PERSONAL")}
+              onClick={() => {
+                setStatementType("PERSONAL");
+                setPeriodType("MONTH");
+              }}
               className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 statementType === "PERSONAL"
                   ? "bg-zinc-800 text-emerald-400 border border-emerald-500/30 shadow-inner"
@@ -445,7 +468,11 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
 
             <button
               type="button"
-              onClick={() => setStatementType("LEDGER")}
+              onClick={() => {
+                setStatementType("LEDGER");
+                setPeriodType("ALL");
+                setDueStatusFilter("ALL");
+              }}
               className={`py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
                 statementType === "LEDGER"
                   ? "bg-zinc-800 text-sky-400 border border-sky-500/30 shadow-inner"
@@ -568,9 +595,10 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
             <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">
               2. Choose Period Scope
             </label>
-            <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-zinc-900/80 border border-zinc-800">
-              {(["MONTH", "WEEK", "DAY", "YEAR", "CUSTOM"] as PeriodType[]).map((p) => {
+            <div className="flex items-center gap-1 p-1 rounded-2xl bg-zinc-900/80 border border-zinc-800 overflow-x-auto no-scrollbar">
+              {(["ALL", "MONTH", "WEEK", "DAY", "YEAR", "CUSTOM"] as PeriodType[]).map((p) => {
                 const labels: Record<PeriodType, string> = {
+                  ALL: "All Time",
                   MONTH: "Month",
                   WEEK: "Week",
                   DAY: "Day",
@@ -582,7 +610,7 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
                     key={p}
                     type="button"
                     onClick={() => setPeriodType(p)}
-                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all text-center ${
+                    className={`flex-1 min-w-[62px] py-1.5 px-2 rounded-xl text-xs font-bold transition-all text-center whitespace-nowrap ${
                       periodType === p
                         ? "bg-zinc-800 text-emerald-400 border border-zinc-700/80 shadow-inner"
                         : "text-zinc-400 hover:text-zinc-200"
@@ -596,6 +624,21 @@ export const DownloadStatementModal: React.FC<DownloadStatementModalProps> = ({
 
             {/* Scope Specific Inputs */}
             <div className="mt-3 p-3.5 rounded-2xl bg-zinc-900/40 border border-zinc-850">
+              {/* Scope: ALL */}
+              {periodType === "ALL" && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <span className="text-xs text-zinc-200 font-semibold block">All Transactions Ever Recorded</span>
+                      <span className="text-[10px] text-zinc-500">Includes complete account history without date cutoff</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                    All History
+                  </span>
+                </div>
+              )}
               {/* Scope: MONTH */}
               {periodType === "MONTH" && (
                 <div className="grid grid-cols-2 gap-2.5">
