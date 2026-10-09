@@ -28,7 +28,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ onOpenQuickAdd }) => {
   ];
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-850 px-2 py-2 safe-area-bottom">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-850 px-2 py-2 safe-area-bottom">
       <div className="flex items-center justify-around relative">
         {/* First 2 items */}
         {navItems.slice(0, 2).map((item) => {

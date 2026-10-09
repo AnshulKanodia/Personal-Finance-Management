@@ -467,12 +467,12 @@ export default function ProfilePage() {
       {/* Version Number at Bottom */}
       <div className="pt-6 border-t border-zinc-850 flex flex-col items-center justify-center text-center text-xs text-zinc-500 gap-1 font-mono">
         <span className="font-bold text-zinc-300">RupeePulse PWA</span>
-        <span className="text-[11px] text-zinc-400">Version 1.3.0 (Build 2026.09)</span>
+        <span className="text-[11px] text-zinc-400">Version 1.4.0 (Build 2026.10)</span>
       </div>
 
       {/* Edit Profile Modal */}
       {isEditingProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
           <div className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-zinc-800 p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-850">
               <h3 className="text-base font-bold text-zinc-100">Edit Profile</h3>
