@@ -163,7 +163,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
               )}
             </div>
           </div>
-          <h1 className="text-2xl font-black tracking-tight bg-gradient-to-r from-zinc-100 via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+          <h1 className="text-2xl font-black tracking-tight text-zinc-100">
             RupeePulse
           </h1>
           <div className="flex items-center gap-1.5 mt-1 text-xs text-zinc-400">
