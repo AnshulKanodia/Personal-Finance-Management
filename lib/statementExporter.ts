@@ -48,6 +48,218 @@ function formatPaymentMode(mode: string): string {
   }
 }
 
+const EMOJI_MAP: Record<string, string> = {
+  // Food & Dining
+  "🍕": "[Pizza]",
+  "🍔": "[Burger]",
+  "🍟": "[Fries]",
+  "🌭": "[Hotdog]",
+  "🥪": "[Sandwich]",
+  "🌮": "[Taco]",
+  "🌯": "[Burrito]",
+  "🍜": "[Noodles]",
+  "🍝": "[Pasta]",
+  "🍛": "[Curry]",
+  "🍚": "[Rice]",
+  "🍱": "[Lunchbox]",
+  "🍣": "[Sushi]",
+  "🍲": "[Pot]",
+  "🥘": "[Pan]",
+  "🥣": "[Soup]",
+  "🥗": "[Salad]",
+  "🍿": "[Popcorn]",
+  "🍩": "[Donut]",
+  "🍪": "[Cookie]",
+  "🎂": "[Cake]",
+  "🍰": "[Pastry]",
+  "🧁": "[Cupcake]",
+  "🍫": "[Chocolate]",
+  "🍬": "[Candy]",
+  "🍦": "[Ice Cream]",
+  "🍨": "[Ice Cream]",
+  "☕": "[Coffee]",
+  "🍵": "[Chai/Tea]",
+  "🧋": "[Boba/Tea]",
+  "🥤": "[Drink]",
+  "🍻": "[Beer]",
+  "🍺": "[Beer]",
+  "🍷": "[Wine]",
+  "🍸": "[Cocktail]",
+  "🍹": "[Juice]",
+  "🍾": "[Champagne]",
+  "🍼": "[Milk]",
+  "🍽️": "[Dining]",
+  "🍴": "[Dining]",
+
+  // Transport & Fuel
+  "🚕": "[Cab]",
+  "🚖": "[Cab]",
+  "🚗": "[Car]",
+  "🚘": "[Car]",
+  "🚙": "[SUV]",
+  "🏎️": "[Car]",
+  "🚌": "[Bus]",
+  "🚎": "[Bus]",
+  "🚐": "[Van]",
+  "🚑": "[Ambulance]",
+  "🚓": "[Police]",
+  "🚒": "[Fire]",
+  "🚚": "[Truck]",
+  "🚛": "[Lorry]",
+  "🚜": "[Tractor]",
+  "🛵": "[Scooter]",
+  "🏍️": "[Bike]",
+  "🚲": "[Cycle]",
+  "🛴": "[Scooter]",
+  "⛽": "[Fuel/Petrol]",
+  "🚆": "[Train]",
+  "🚇": "[Metro]",
+  "🚄": "[Train]",
+  "🚅": "[Train]",
+  "🚂": "[Train]",
+  "✈️": "[Flight]",
+  "🛫": "[Flight]",
+  "🛬": "[Flight]",
+  "🚁": "[Helicopter]",
+  "🚢": "[Ship]",
+  "🛳️": "[Cruise]",
+  "🚤": "[Boat]",
+  "🧳": "[Luggage]",
+  "🎫": "[Ticket]",
+  "🎟️": "[Pass]",
+
+  // Shopping & Groceries
+  "🛒": "[Groceries]",
+  "🛍️": "[Shopping]",
+  "👕": "[Clothes]",
+  "👔": "[Shirt]",
+  "👗": "[Dress]",
+  "👖": "[Jeans]",
+  "👟": "[Shoes]",
+  "👠": "[Shoes]",
+  "👜": "[Bag]",
+  "🎒": "[Backpack]",
+  "📦": "[Delivery]",
+  "🏷️": "[Tag]",
+  "👓": "[Glasses]",
+  "🕶️": "[Sunglasses]",
+
+  // Home & Utilities
+  "🏠": "[Rent/Home]",
+  "🏡": "[Home]",
+  "🏢": "[Office]",
+  "🏬": "[Store]",
+  "💡": "[Electricity]",
+  "🔌": "[Power]",
+  "💧": "[Water]",
+  "🚿": "[Bath]",
+  "📶": "[Internet]",
+  "🌐": "[Wifi]",
+  "📱": "[Mobile/Recharge]",
+  "💻": "[Laptop]",
+  "🖥️": "[PC]",
+  "🖨️": "[Print]",
+  "📺": "[TV]",
+  "📻": "[Radio]",
+  "🛠️": "[Repairs]",
+  "🔧": "[Tools]",
+  "🔨": "[Hammer]",
+  "🧹": "[Cleaning]",
+  "🧺": "[Laundry]",
+
+  // Health & Care
+  "💊": "[Medicine]",
+  "💉": "[Vaccine]",
+  "🩺": "[Doctor]",
+  "🏥": "[Hospital]",
+  "🩹": "[Bandage]",
+  "🩸": "[Blood]",
+  "🦷": "[Dental]",
+  "🏋️": "[Gym]",
+  "🧘": "[Yoga]",
+  "🏃": "[Running]",
+  "🏊": "[Swim]",
+  "💇": "[Salon/Haircut]",
+  "💅": "[Nails]",
+  "🧴": "[Lotion]",
+
+  // Entertainment
+  "🎬": "[Movie]",
+  "🎥": "[Cinema]",
+  "📽️": "[Film]",
+  "🎭": "[Theater]",
+  "🎨": "[Art]",
+  "🎪": "[Circus]",
+  "🎤": "[Karaoke]",
+  "🎧": "[Music]",
+  "🎼": "[Music]",
+  "🎹": "[Piano]",
+  "🎸": "[Guitar]",
+  "🎺": "[Music]",
+  "🎻": "[Violin]",
+  "🥁": "[Drums]",
+  "🎮": "[Gaming]",
+  "🕹️": "[Game]",
+  "🎲": "[Dice]",
+  "♟️": "[Chess]",
+  "🎳": "[Bowling]",
+
+  // Money & Business
+  "💰": "[Money]",
+  "💵": "[Cash]",
+  "💸": "[Spent]",
+  "💳": "[Card]",
+  "🪙": "[Coins]",
+  "🏦": "[Bank]",
+  "🏧": "[ATM]",
+  "🧾": "[Receipt/Bill]",
+  "📈": "[Invest]",
+  "📉": "[Loss]",
+  "📊": "[Stats]",
+  "💎": "[Jewelry]",
+  "💼": "[Work]",
+
+  // Social & Celebrations
+  "🎁": "[Gift]",
+  "🎉": "[Celebration]",
+  "🎊": "[Party]",
+  "🎈": "[Balloon]",
+  "💐": "[Flowers]",
+  "🌹": "[Rose]",
+  "⭐": "[Star]",
+  "🌟": "[Star]",
+  "✨": "[Sparkle]",
+  "❤️": "[Heart]",
+  "✔️": "[Done]",
+  "✅": "[Verified]",
+  "❌": "[Cancelled]",
+};
+
+/**
+ * Converts emojis into clean, human-readable labels for standard Helvetica PDF fonts
+ * so text doesn't vanish into whitespace or broken characters in PDF readers.
+ */
+export function formatNotesForPDF(notes?: string): string {
+  if (!notes) return "-";
+  let text = notes.trim();
+  if (!text) return "-";
+
+  // Replace mapped emojis with clean descriptive tags
+  for (const [emoji, label] of Object.entries(EMOJI_MAP)) {
+    if (text.includes(emoji)) {
+      text = text.replaceAll(emoji, ` ${label} `);
+    }
+  }
+
+  // Any remaining unmapped Unicode emojis & symbols
+  text = text.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]/g, " [Note] ");
+
+  // Collapse multiple whitespaces and trim
+  text = text.replace(/\s+/g, " ").trim();
+
+  return text || "-";
+}
+
 /**
  * Generates an executive-grade, professional PDF account statement
  */
@@ -162,7 +374,7 @@ export function exportStatementToPDF(
     const mode = formatPaymentMode(t.paymentMode);
     const debit = isExpense ? `Rs. ${t.amount.toLocaleString("en-IN")}` : "-";
     const credit = !isExpense ? `Rs. ${t.amount.toLocaleString("en-IN")}` : "-";
-    const notes = t.notes ? t.notes.trim() : "-";
+    const notes = formatNotesForPDF(t.notes);
 
     return [dateFormatted, category, mode, isExpense ? "Expense" : "Income", debit, credit, notes];
   });
@@ -544,7 +756,7 @@ export function exportLedgerStatementToPDF(
     const toTakeAmt = isTake ? `Rs. ${d.amount.toLocaleString("en-IN")}` : "-";
     const toGiveAmt = !isTake ? `Rs. ${d.amount.toLocaleString("en-IN")}` : "-";
     const status = d.isSettled ? "Settled" : "Active";
-    const notes = d.notes ? d.notes.trim() : "-";
+    const notes = formatNotesForPDF(d.notes);
 
     return [dateFormatted, friend, action, mode, toTakeAmt, toGiveAmt, status, notes];
   });
