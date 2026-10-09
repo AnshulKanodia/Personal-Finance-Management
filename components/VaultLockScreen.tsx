@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Lock, Unlock, IndianRupee, Delete, ArrowRight, ShieldCheck, Sparkles, Fingerprint } from "lucide-react";
 
-import { Starfield } from "./Starfield";
 import { isBiometricsAvailable, promptBiometricAuth } from "@/lib/webauthn";
 import { getPreferences } from "@/lib/preferences";
 
@@ -147,10 +146,7 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
   }, [pin, loading, isSuccess]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050507] select-none">
-      {/* Moving stars in cosmic night sky */}
-      <Starfield />
-
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050507]/90 backdrop-blur-sm select-none">
       <div className="relative w-full max-w-[340px] sm:max-w-sm flex flex-col items-center z-10 animate-in fade-in zoom-in-95 duration-300">
         {/* Brand Header */}
         <div className="flex flex-col items-center mb-5 sm:mb-6 text-center">
