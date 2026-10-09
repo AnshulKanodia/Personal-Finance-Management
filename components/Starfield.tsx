@@ -18,24 +18,19 @@ export const Starfield: React.FC = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: true });
     if (!ctx) return;
 
+    // Check if user prefers reduced motion
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     let animationFrameId: number;
+    let isRunning = false;
     let width = (canvas.width = window.innerWidth);
     let height = (canvas.height = window.innerHeight);
 
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-      initStars();
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    // Generate stars
-    const starCount = Math.floor((width * height) / 8000); // Responsive density (~100-150 stars)
+    // Responsive star count: ~80-120 stars for high visual fidelity with near-zero GPU load
+    const starCount = Math.min(120, Math.floor((width * height) / 9000));
     let stars: Star[] = [];
 
     const initStars = () => {
@@ -44,23 +39,42 @@ export const Starfield: React.FC = () => {
         stars.push({
           x: Math.random() * width,
           y: Math.random() * height,
-          size: Math.random() * 1.5 + 0.5, // 0.5px to 2px
-          alpha: Math.random() * 0.7 + 0.2, // 0.2 to 0.9 opacity
-          speed: Math.random() * 0.15 + 0.05, // Slow, elegant drift
-          twinkleSpeed: Math.random() * 0.02 + 0.005,
+          size: Math.random() * 1.4 + 0.5, // 0.5px to 1.9px
+          alpha: Math.random() * 0.65 + 0.2, // 0.2 to 0.85 opacity
+          speed: Math.random() * 0.12 + 0.04, // Smooth slow drift
+          twinkleSpeed: Math.random() * 0.018 + 0.006,
         });
       }
     };
 
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      initStars();
+      if (prefersReducedMotion) renderStatic();
+    };
+
+    window.addEventListener("resize", handleResize);
     initStars();
 
     let frame = 0;
+
+    const renderStatic = () => {
+      ctx.clearRect(0, 0, width, height);
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${star.alpha})`;
+        ctx.fill();
+      }
+    };
 
     const render = () => {
       frame++;
       ctx.clearRect(0, 0, width, height);
 
-      // Draw and animate stars
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
 
@@ -71,27 +85,62 @@ export const Starfield: React.FC = () => {
           star.x = Math.random() * width;
         }
 
-        // Gentle twinkling
-        const currentAlpha =
-          star.alpha + Math.sin(frame * star.twinkleSpeed + i) * 0.25;
-        const clampedAlpha = Math.max(0.1, Math.min(0.95, currentAlpha));
+        // Gentle twinkling sine calculation
+        const currentAlpha = star.alpha + Math.sin(frame * star.twinkleSpeed + i) * 0.22;
+        const clampedAlpha = Math.max(0.12, Math.min(0.9, currentAlpha));
 
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255, 255, 255, ${clampedAlpha})`;
-        ctx.shadowBlur = star.size > 1.2 ? 4 : 0;
-        ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
         ctx.fill();
+
+        // High-performance soft glow without ctx.shadowBlur pipeline stall
+        if (star.size > 1.2) {
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.size * 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${clampedAlpha * 0.18})`;
+          ctx.fill();
+        }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      if (isRunning) {
+        animationFrameId = requestAnimationFrame(render);
+      }
     };
 
-    render();
+    const startAnimation = () => {
+      if (!isRunning && !prefersReducedMotion) {
+        isRunning = true;
+        animationFrameId = requestAnimationFrame(render);
+      }
+    };
+
+    const stopAnimation = () => {
+      isRunning = false;
+      cancelAnimationFrame(animationFrameId);
+    };
+
+    // Pause animation when tab is inactive to preserve mobile battery
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopAnimation();
+      } else {
+        startAnimation();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    if (prefersReducedMotion) {
+      renderStatic();
+    } else {
+      startAnimation();
+    }
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationFrameId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      stopAnimation();
     };
   }, []);
 

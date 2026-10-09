@@ -17,12 +17,23 @@ import {
   RefreshCw,
   Download,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatINR, formatDate } from "@/lib/utils";
-import { QuickTransactionModal } from "@/components/QuickTransactionModal";
-import { EditTransactionModal } from "@/components/EditTransactionModal";
-import { DownloadStatementModal } from "@/components/DownloadStatementModal";
 import { RupeeLoader } from "@/components/RupeeLoader";
+
+const QuickTransactionModal = dynamic(
+  () => import("@/components/QuickTransactionModal").then((mod) => mod.QuickTransactionModal),
+  { ssr: false }
+);
+const EditTransactionModal = dynamic(
+  () => import("@/components/EditTransactionModal").then((mod) => mod.EditTransactionModal),
+  { ssr: false }
+);
+const DownloadStatementModal = dynamic(
+  () => import("@/components/DownloadStatementModal").then((mod) => mod.DownloadStatementModal),
+  { ssr: false }
+);
 
 import { getCached, setCached, clearCache } from "@/lib/clientCache";
 

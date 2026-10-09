@@ -60,11 +60,14 @@ const TransactionSchema = new Schema<ITransaction>(
   }
 );
 
-// Index for high-performance monthly and category aggregations
+// Indexes for high-performance searches, monthly aggregations, and category breakdowns
 TransactionSchema.index({ date: -1, createdAt: -1 });
 TransactionSchema.index({ category: 1, date: -1 });
 TransactionSchema.index({ type: 1, date: -1 });
+TransactionSchema.index({ date: -1, type: 1 });
+TransactionSchema.index({ type: 1, category: 1, date: -1 });
 TransactionSchema.index({ paymentMode: 1, date: -1 });
+TransactionSchema.index({ notes: "text" });
 
 const Transaction: Model<ITransaction> =
   mongoose.models.Transaction || mongoose.model<ITransaction>("Transaction", TransactionSchema);

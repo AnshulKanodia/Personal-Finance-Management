@@ -3,7 +3,6 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Lock, IndianRupee, Delete, ArrowRight } from "lucide-react";
-import { Starfield } from "@/components/Starfield";
 import { RupeeLoader } from "@/components/RupeeLoader";
 
 function LoginForm() {
@@ -216,8 +215,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#050507] relative overflow-hidden select-none">
-      <Starfield />
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden select-none">
       <div className="relative z-10 w-full flex justify-center">
         <Suspense fallback={<RupeeLoader size="sm" label="Loading secure vault..." />}>
           <LoginForm />

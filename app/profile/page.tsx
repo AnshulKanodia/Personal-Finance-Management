@@ -29,11 +29,22 @@ import {
   RotateCcw,
   Loader2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { formatINR } from "@/lib/utils";
 import { clearCache, getCached, setCached } from "@/lib/clientCache";
-import { DownloadStatementModal } from "@/components/DownloadStatementModal";
-import { DashboardSettingsModal } from "@/components/DashboardSettingsModal";
-import { VaultRestoreModal } from "@/components/VaultRestoreModal";
+
+const DownloadStatementModal = dynamic(
+  () => import("@/components/DownloadStatementModal").then((mod) => mod.DownloadStatementModal),
+  { ssr: false }
+);
+const DashboardSettingsModal = dynamic(
+  () => import("@/components/DashboardSettingsModal").then((mod) => mod.DashboardSettingsModal),
+  { ssr: false }
+);
+const VaultRestoreModal = dynamic(
+  () => import("@/components/VaultRestoreModal").then((mod) => mod.VaultRestoreModal),
+  { ssr: false }
+);
 
 interface Friend {
   _id: string;
