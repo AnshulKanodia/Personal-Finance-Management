@@ -6,6 +6,7 @@ import Friend from "@/models/Friend";
 import FriendDue from "@/models/FriendDue";
 import Transaction from "@/models/Transaction";
 import Group from "@/models/Group";
+import Budget from "@/models/Budget";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     const friendDues: any[] = Array.isArray(rawData.friendDues) ? rawData.friendDues : [];
     const transactions: any[] = Array.isArray(rawData.transactions) ? rawData.transactions : [];
     const groups: any[] = Array.isArray(rawData.groups) ? rawData.groups : [];
+    const budgets: any[] = Array.isArray(rawData.budgets) ? rawData.budgets : [];
 
     if (
       categories.length === 0 &&
@@ -54,6 +56,7 @@ export async function POST(req: NextRequest) {
         FriendDue.deleteMany({}),
         Transaction.deleteMany({}),
         Group.deleteMany({}),
+        Budget.deleteMany({}),
       ]);
 
       // 2. Insert Category collection
@@ -149,6 +152,23 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // 7. Insert Budgets (if present)
+      if (budgets.length > 0) {
+        await Budget.insertMany(
+          budgets.map((b) => ({
+            _id: b._id ? new mongoose.Types.ObjectId(b._id) : new mongoose.Types.ObjectId(),
+            category: new mongoose.Types.ObjectId(b.category?._id || b.category),
+            monthlyLimit: Number(b.monthlyLimit),
+            month: b.month,
+            alertThreshold: b.alertThreshold || 80,
+            isActive: b.isActive !== undefined ? Boolean(b.isActive) : true,
+            notes: b.notes || "",
+            createdAt: b.createdAt ? new Date(b.createdAt) : new Date(),
+            updatedAt: b.updatedAt ? new Date(b.updatedAt) : new Date(),
+          }))
+        );
+      }
+
       return NextResponse.json({
         success: true,
         mode: "replace",
@@ -159,6 +179,7 @@ export async function POST(req: NextRequest) {
           friendDues: friendDues.length,
           transactions: transactions.length,
           groups: groups.length,
+          budgets: budgets.length,
         },
       });
     }
@@ -314,16 +335,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // 6. Process Budgets (if present)
+    let restoredBudgets = 0;
+    for (const b of budgets) {
+      if (!b.category || !b.month) continue;
+      const rawCatId = (b.category?._id || b.category)?.toString();
+      const mappedCatId = rawCatId ? categoryIdMap.get(rawCatId) : null;
+      if (!mappedCatId) continue;
+
+      const existingBudget = await Budget.findOne({
+        category: mappedCatId,
+        month: b.month,
+      });
+
+      if (!existingBudget) {
+        await Budget.create({
+          category: mappedCatId,
+          monthlyLimit: Number(b.monthlyLimit),
+          month: b.month,
+          alertThreshold: b.alertThreshold || 80,
+          isActive: b.isActive !== undefined ? Boolean(b.isActive) : true,
+          notes: b.notes || "",
+        });
+        restoredBudgets++;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       mode: "merge",
-      message: `Vault merged: ${restoredTransactions} transactions, ${restoredFriends} friends, ${restoredDues} dues, ${restoredCategories} categories added.`,
+      message: `Vault merged: ${restoredTransactions} transactions, ${restoredFriends} friends, ${restoredDues} dues, ${restoredCategories} categories, ${restoredBudgets} budgets added.`,
       counts: {
         categories: restoredCategories,
         friends: restoredFriends,
         friendDues: restoredDues,
         transactions: restoredTransactions,
         groups: restoredGroups,
+        budgets: restoredBudgets,
       },
     });
   } catch (error: any) {
