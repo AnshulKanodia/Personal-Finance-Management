@@ -4,6 +4,12 @@ import React, { useState, useEffect } from "react";
 import { Plus, Edit2, Trash2, Tags, X, Check, RefreshCw } from "lucide-react";
 import { CategoryIcon, AVAILABLE_ICONS } from "@/components/CategoryIcon";
 import { RupeeLoader } from "@/components/RupeeLoader";
+import dynamic from "next/dynamic";
+
+const BudgetManagerCard = dynamic(
+  () => import("@/components/BudgetManagerCard").then((mod) => mod.BudgetManagerCard),
+  { ssr: false }
+);
 
 interface Category {
   _id: string;
@@ -28,6 +34,9 @@ const PRESET_COLORS = [
 ];
 
 export default function CategoriesPage() {
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -208,6 +217,9 @@ export default function CategoriesPage() {
           ))}
         </div>
       )}
+
+      {/* Vault Guard Budgets Section */}
+      <BudgetManagerCard currentMonth={currentMonth} />
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
