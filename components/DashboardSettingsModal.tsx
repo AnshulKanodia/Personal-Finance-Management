@@ -134,6 +134,37 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsModalProps> = ({
               <span className="text-[10px] text-emerald-400 font-mono">Real-time sync</span>
             </div>
 
+            {/* Vault Guard Budget Limits */}
+            <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3 transition-colors hover:border-zinc-700">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-zinc-100">Vault Guard Budgets</div>
+                  <div className="text-[11px] text-zinc-400 leading-snug">
+                    Real-time category spending limits with safe, warning, and breach alerts
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={prefs.showVaultGuard}
+                onClick={() => handleToggle("showVaultGuard")}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  prefs.showVaultGuard ? "bg-emerald-500" : "bg-zinc-800"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-zinc-950 shadow-md ring-0 transition duration-200 ease-in-out ${
+                    prefs.showVaultGuard ? "translate-x-5" : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
+
             {/* Spending Velocity */}
             <div className="p-3.5 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3 transition-colors hover:border-zinc-700">
               <div className="flex items-center justify-between gap-3">
