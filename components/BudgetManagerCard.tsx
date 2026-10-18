@@ -8,12 +8,16 @@ import {
   Edit2,
   Trash2,
   AlertTriangle,
+  AlertOctagon,
   CheckCircle2,
   X,
   SlidersHorizontal,
   ChevronRight,
   TrendingDown,
   Info,
+  Flame,
+  Zap,
+  Calendar,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { PrivacyMask } from "@/components/PrivacyMask";
@@ -138,8 +142,12 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
     }
   };
 
-  const hasBreached = summary.overBudgetCount > 0;
+  const breachedList = budgets.filter((b) => b.status === "OVER_BUDGET");
+  const overspendingList = budgets.filter((b) => b.burnPace === "OVERSPENDING");
+  const hasBreached = summary.overBudgetCount > 0 || breachedList.length > 0;
   const hasWarning = summary.warningCount > 0;
+  const hasOverspending = (summary.overspendingCount ?? 0) > 0 || overspendingList.length > 0;
+  const totalOverspendAmount = breachedList.reduce((acc, b) => acc + (b.overspendAmount || 0), 0);
 
   return (
     <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-all duration-300">
@@ -148,7 +156,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
         className={`absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r ${
           hasBreached
             ? "from-rose-500/20 via-rose-500 to-rose-500/20"
-            : hasWarning
+            : hasOverspending || hasWarning
             ? "from-amber-500/20 via-amber-500 to-amber-500/20"
             : "from-emerald-500/20 via-emerald-500 to-emerald-500/20"
         }`}
@@ -161,7 +169,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
             className={`p-2 rounded-xl border shadow-inner flex-shrink-0 ${
               hasBreached
                 ? "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                : hasWarning
+                : hasOverspending || hasWarning
                 ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
                 : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
             }`}
@@ -201,6 +209,67 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
         </div>
       </div>
 
+      {/* Real-Time Smart Alert Banner */}
+      {summary.activeBudgetsCount > 0 && (hasBreached || hasOverspending) && (
+        <div
+          className={`mb-4 p-3.5 rounded-2xl border flex items-start justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-300 ${
+            hasBreached
+              ? "bg-rose-500/10 border-rose-500/30 text-rose-300 shadow-[0_0_15px_rgba(244,63,94,0.12)]"
+              : "bg-amber-500/10 border-amber-500/30 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.12)]"
+          }`}
+        >
+          <div className="flex items-start gap-2.5 min-w-0">
+            <div
+              className={`p-1.5 rounded-xl border mt-0.5 flex-shrink-0 ${
+                hasBreached
+                  ? "bg-rose-500/20 border-rose-500/40 text-rose-400 animate-pulse"
+                  : "bg-amber-500/20 border-amber-500/40 text-amber-400"
+              }`}
+            >
+              {hasBreached ? (
+                <AlertOctagon className="w-4 h-4 stroke-[2.5]" />
+              ) : (
+                <Flame className="w-4 h-4 stroke-[2.5]" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-bold flex items-center gap-1.5">
+                <span>
+                  {hasBreached
+                    ? "Immediate Action Required: Budget Cap Exceeded"
+                    : "Pacing Warning: Accelerated Daily Burn Rate"}
+                </span>
+              </div>
+              <p className="text-[11px] opacity-90 mt-0.5 leading-snug">
+                {hasBreached
+                  ? `${breachedList.map((b) => b.category?.name).join(", ")} exceeded limits by ₹${formatINR(
+                      totalOverspendAmount
+                    )}. Adjust caps or curtail outflows.`
+                  : `${overspendingList
+                      .map((b) => b.category?.name)
+                      .join(", ")} burning at ₹${formatINR(
+                      overspendingList[0]?.dailyRunRate || 0
+                    )}/day, projected to exceed cap by month-end.`}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              const target = breachedList[0] || overspendingList[0];
+              if (target) openEditModal(target);
+            }}
+            className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex-shrink-0 active:scale-95 ${
+              hasBreached
+                ? "bg-rose-500/20 hover:bg-rose-500/30 border-rose-500/40 text-rose-200"
+                : "bg-amber-500/20 hover:bg-amber-500/30 border-amber-500/40 text-amber-200"
+            }`}
+          >
+            Adjust Cap
+          </button>
+        </div>
+      )}
+
       {/* High-Level Overview Strip */}
       {summary.activeBudgetsCount > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 p-3 rounded-xl bg-zinc-950/70 border border-zinc-850">
@@ -238,10 +307,10 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
                   <AlertTriangle className="w-3 h-3" />
                   {summary.overBudgetCount} breached
                 </span>
-              ) : hasWarning ? (
+              ) : hasOverspending || hasWarning ? (
                 <span className="text-amber-400 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
-                  {summary.warningCount} warning
+                  {hasOverspending ? "High burn pace" : `${summary.warningCount} warning`}
                 </span>
               ) : (
                 <span className="text-emerald-400 flex items-center gap-1">
@@ -251,6 +320,33 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
               )}
             </div>
           </div>
+
+          {/* Daily Burn Rate & Runway Strip */}
+          {summary.isCurrentMonth !== false && (summary.daysRemaining ?? 0) > 0 && (
+            <div className="col-span-2 sm:col-span-4 mt-1.5 pt-2 border-t border-zinc-850 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center gap-3">
+                <span className="text-zinc-400 flex items-center gap-1 font-mono">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  Run-Rate:{" "}
+                  <span className="font-bold text-zinc-200">
+                    <PrivacyMask>₹{formatINR(summary.avgDailyBurn || 0)}/day</PrivacyMask>
+                  </span>
+                </span>
+                <span className="text-zinc-600">•</span>
+                <span className="text-zinc-400 flex items-center gap-1 font-mono">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  Safe Cap:{" "}
+                  <span className="font-bold text-emerald-400">
+                    <PrivacyMask>₹{formatINR(summary.recommendedDailyBurn || 0)}/day</PrivacyMask>
+                  </span>
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 font-mono text-[10px] text-zinc-400 bg-zinc-900/90 px-2 py-0.5 rounded-md border border-zinc-800">
+                <Calendar className="w-3 h-3 text-zinc-400" />
+                <span>{summary.daysRemaining} days left</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -340,23 +436,44 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
                   </div>
 
                   {/* Progress Status Footer */}
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-mono text-zinc-400">
-                      {b.percentUsed}% burned
-                    </span>
+                  <div className="flex items-center justify-between text-[10px] gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="font-mono text-zinc-400">
+                        {b.percentUsed}% burned
+                      </span>
+
+                      {b.todaySpent && b.todaySpent > 0 ? (
+                        <span className="px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono text-[9px] border border-zinc-700/60">
+                          Today: +₹{formatINR(b.todaySpent)}
+                        </span>
+                      ) : null}
+
+                      {b.burnPace === "OVERSPENDING" && (
+                        <span className="px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono text-[9px] flex items-center gap-0.5">
+                          <Flame className="w-2.5 h-2.5 text-amber-400" />
+                          High Pace
+                        </span>
+                      )}
+
+                      {b.burnPace === "ON_TRACK" && (b.recommendedDailySpend ?? 0) > 0 && (
+                        <span className="text-zinc-500 font-mono text-[9px] hidden sm:inline">
+                          (Safe: ₹{formatINR(b.recommendedDailySpend || 0)}/day)
+                        </span>
+                      )}
+                    </div>
 
                     {isBreach ? (
-                      <span className="font-semibold text-rose-400 flex items-center gap-1 font-mono">
+                      <span className="font-semibold text-rose-400 flex items-center gap-1 font-mono flex-shrink-0">
                         <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
                         Exceeded by <PrivacyMask>{formatINR(b.overspendAmount)}</PrivacyMask>
                       </span>
                     ) : isWarn ? (
-                      <span className="font-semibold text-amber-400 flex items-center gap-1 font-mono">
+                      <span className="font-semibold text-amber-400 flex items-center gap-1 font-mono flex-shrink-0">
                         <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
                         <PrivacyMask>{formatINR(b.remaining)}</PrivacyMask> left before cap
                       </span>
                     ) : (
-                      <span className="text-emerald-400/90 font-mono">
+                      <span className="text-emerald-400/90 font-mono flex-shrink-0">
                         <PrivacyMask>{formatINR(b.remaining)}</PrivacyMask> safe headroom
                       </span>
                     )}
