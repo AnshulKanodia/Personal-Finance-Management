@@ -19,8 +19,13 @@ export interface BudgetWithMetrics {
   isActive: boolean;
   notes?: string;
   spent: number;
+  todaySpent?: number;
   remaining: number;
   percentUsed: number;
+  dailyRunRate?: number;
+  recommendedDailySpend?: number;
+  projectedMonthEndSpend?: number;
+  burnPace?: "ON_TRACK" | "WARNING" | "OVERSPENDING" | "BREACHED";
   transactionCount: number;
   status: "SAFE" | "WARNING" | "OVER_BUDGET";
   overspendAmount: number;
@@ -36,6 +41,14 @@ export interface BudgetSummary {
   activeBudgetsCount: number;
   overBudgetCount: number;
   warningCount: number;
+  overspendingCount?: number;
+  daysInMonth?: number;
+  daysElapsed?: number;
+  daysRemaining?: number;
+  recommendedDailyBurn?: number;
+  avgDailyBurn?: number;
+  projectedTotalSpend?: number;
+  isCurrentMonth?: boolean;
 }
 
 export interface SaveBudgetPayload {
