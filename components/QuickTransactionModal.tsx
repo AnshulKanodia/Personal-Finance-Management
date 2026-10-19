@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Check, IndianRupee, Sparkles, Calendar, Tag, CreditCard } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { BudgetImpactPreview } from "./BudgetImpactPreview";
 import { clearCache } from "@/lib/clientCache";
 
 interface Category {
@@ -306,6 +307,14 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
               })}
             </div>
           </div>
+
+          {/* Real-time Budget Impact Preview & Soft Limit Interceptor */}
+          <BudgetImpactPreview
+            type={type}
+            categoryId={categoryId}
+            amount={amount}
+            date={date}
+          />
 
           {/* Date & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
