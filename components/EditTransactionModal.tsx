@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Trash2, Calendar, Tag, Check, IndianRupee } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { BudgetImpactPreview } from "./BudgetImpactPreview";
 import { clearCache } from "@/lib/clientCache";
 
 interface Category {
@@ -330,6 +331,20 @@ export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
               })}
             </div>
           </div>
+
+          {/* Real-time Budget Impact Preview & Soft Limit Interceptor */}
+          <BudgetImpactPreview
+            type={type}
+            categoryId={categoryId}
+            amount={amount}
+            date={date}
+            originalAmount={transaction.amount}
+            originalCategoryId={
+              typeof transaction.category === "object"
+                ? transaction.category._id
+                : transaction.category
+            }
+          />
 
           {/* Date & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
