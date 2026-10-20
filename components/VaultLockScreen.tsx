@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Lock, Unlock, IndianRupee, Delete, ArrowRight, ShieldCheck, Sparkles, Fingerprint } from "lucide-react";
+import { Lock, Unlock, Delete, ArrowRight, ShieldCheck, Sparkles, Fingerprint } from "lucide-react";
 
 import { isBiometricsAvailable, promptBiometricAuth } from "@/lib/webauthn";
 import { getPreferences } from "@/lib/preferences";
@@ -151,11 +151,15 @@ export const VaultLockScreen: React.FC<VaultLockScreenProps> = ({ onUnlock }) =>
         {/* Brand Header */}
         <div className="flex flex-col items-center mb-5 sm:mb-6 text-center">
           <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_30px_rgba(16,185,129,0.3)] mb-2.5 sm:mb-3 transition-transform hover:scale-105">
-            <div className="w-full h-full bg-[#08080c] rounded-[14px] flex items-center justify-center">
+            <div className="w-full h-full bg-[#08080c] rounded-[14px] flex items-center justify-center p-1.5">
               {isSuccess ? (
                 <Unlock className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 animate-in zoom-in duration-200" />
               ) : (
-                <IndianRupee className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-400 stroke-[2.2]" />
+                <img
+                  src="/icons/wallet-icon.png"
+                  alt="RupeePulse"
+                  className="w-full h-full object-contain"
+                />
               )}
             </div>
           </div>

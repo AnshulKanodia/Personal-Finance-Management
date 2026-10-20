@@ -48,3 +48,7 @@ __pycache__/
 # DevOps & Backups
 /backups/
 /bin/
+
+# Raw branding assets in root
+/Wallet Icon.png
+/Rupee Wallet .png

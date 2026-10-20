@@ -63,8 +63,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] transition-transform group-hover:scale-105">
-            <div className="w-full h-full bg-[#08080c] rounded-[10px] flex items-center justify-center">
-              <IndianRupee className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors stroke-[2.2]" />
+            <div className="w-full h-full bg-[#08080c] rounded-[10px] flex items-center justify-center p-1">
+              <img
+                src="/icons/wallet-icon.png"
+                alt="RupeePulse"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           <div>
