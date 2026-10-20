@@ -18,6 +18,8 @@ import {
   Flame,
   Zap,
   Calendar,
+  RotateCcw,
+  Wallet,
 } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { PrivacyMask } from "@/components/PrivacyMask";
@@ -37,7 +39,15 @@ interface BudgetManagerCardProps {
 }
 
 export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMonth }) => {
-  const { budgets, summary, loading, saveBudget, deleteBudget, refresh } = useBudgets(currentMonth);
+  const {
+    budgets,
+    summary,
+    loading,
+    saveBudget,
+    rolloverBudgets,
+    deleteBudget,
+    refresh,
+  } = useBudgets(currentMonth);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,6 +56,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [limitAmount, setLimitAmount] = useState<string>("");
   const [alertThreshold, setAlertThreshold] = useState<number>(80);
+  const [rolloverUnspent, setRolloverUnspent] = useState<boolean>(false);
   const [notes, setNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -74,6 +85,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
     setSelectedCategory(catId || (categories.length > 0 ? categories[0]._id : ""));
     setLimitAmount("");
     setAlertThreshold(80);
+    setRolloverUnspent(false);
     setNotes("");
     setFormError(null);
     setIsModalOpen(true);
@@ -84,6 +96,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
     setSelectedCategory(budget.category?._id || "");
     setLimitAmount(budget.monthlyLimit.toString());
     setAlertThreshold(budget.alertThreshold || 80);
+    setRolloverUnspent(Boolean(budget.rolloverUnspent));
     setNotes(budget.notes || "");
     setFormError(null);
     setIsModalOpen(true);
@@ -111,6 +124,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
         monthlyLimit: parsedLimit,
         month: currentMonth,
         alertThreshold,
+        rolloverUnspent,
         notes: notes.trim(),
         isActive: true,
       });
@@ -122,6 +136,18 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
       }
     } catch (err: any) {
       setFormError(err.message || "An unexpected error occurred");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRolloverCopy = async () => {
+    try {
+      setSubmitting(true);
+      const res = await rolloverBudgets();
+      if (!res.success) {
+        alert(res.message || "Failed to copy budgets from previous month");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -148,6 +174,8 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
   const hasWarning = summary.warningCount > 0;
   const hasOverspending = (summary.overspendingCount ?? 0) > 0 || overspendingList.length > 0;
   const totalOverspendAmount = breachedList.reduce((acc, b) => acc + (b.overspendAmount || 0), 0);
+
+  const displayTotalBudget = summary.totalEffectiveBudget || summary.totalBudget;
 
   return (
     <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-all duration-300">
@@ -199,6 +227,18 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
 
         {/* Action Controls */}
         <div className="flex items-center gap-2">
+          {summary.activeBudgetsCount === 0 && (summary.previousMonthBudgetsCount ?? 0) > 0 && (
+            <button
+              onClick={handleRolloverCopy}
+              disabled={submitting}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/30 text-teal-300 font-semibold text-xs transition-all active:scale-95 disabled:opacity-50"
+            >
+              <RotateCcw className="w-3.5 h-3.5 stroke-[2.2]" />
+              <span className="hidden sm:inline">Copy from {summary.previousMonth}</span>
+              <span className="sm:hidden">Copy Last Month</span>
+            </button>
+          )}
+
           <button
             onClick={() => openAddModal()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 font-semibold text-xs transition-all active:scale-95"
@@ -274,9 +314,11 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
       {summary.activeBudgetsCount > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 p-3 rounded-xl bg-zinc-950/70 border border-zinc-850">
           <div>
-            <div className="text-[10px] uppercase font-mono text-zinc-500">Allocated</div>
+            <div className="text-[10px] uppercase font-mono text-zinc-500">
+              Allocated Cap {summary.totalRolledOver && summary.totalRolledOver > 0 ? "(+Rollover)" : ""}
+            </div>
             <div className="text-xs sm:text-sm font-bold font-mono text-zinc-200">
-              <PrivacyMask>{formatINR(summary.totalBudget)}</PrivacyMask>
+              <PrivacyMask>{formatINR(displayTotalBudget)}</PrivacyMask>
             </div>
           </div>
           <div>
@@ -347,6 +389,32 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
               </div>
             </div>
           )}
+
+          {/* Unallocated Headroom Strip (Income vs Budget) */}
+          {summary.totalIncome !== undefined && summary.totalIncome > 0 && (
+            <div className="col-span-2 sm:col-span-4 mt-1.5 pt-2 border-t border-zinc-850/80 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="text-zinc-400 font-mono">Monthly Income:</span>
+                <span className="font-bold text-emerald-400 font-mono">
+                  <PrivacyMask>+{formatINR(summary.totalIncome)}</PrivacyMask>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-zinc-400 font-mono">Unallocated Headroom:</span>
+                <span
+                  className={`font-bold font-mono ${
+                    (summary.unallocatedHeadroom ?? 0) >= 0 ? "text-emerald-400" : "text-amber-400"
+                  }`}
+                >
+                  <PrivacyMask>
+                    {(summary.unallocatedHeadroom ?? 0) >= 0
+                      ? `₹${formatINR(summary.unallocatedHeadroom || 0)} (${summary.unallocatedPercent}%)`
+                      : `-₹${formatINR(Math.abs(summary.unallocatedHeadroom || 0))}`}
+                  </PrivacyMask>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -363,6 +431,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
               icon: "Tag",
             };
 
+            const effectiveLimit = b.effectiveLimit || b.monthlyLimit + (b.rolledOverAmount || 0);
             const barPercent = Math.min(100, Math.max(0, b.percentUsed));
 
             return (
@@ -405,7 +474,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
                         <PrivacyMask>{formatINR(b.spent)}</PrivacyMask>
                         <span className="text-[10px] text-zinc-500 font-normal">
                           {" "}
-                          / {formatINR(b.monthlyLimit)}
+                          / {formatINR(effectiveLimit)}
                         </span>
                       </div>
                     </div>
@@ -445,6 +514,13 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
                       {b.todaySpent && b.todaySpent > 0 ? (
                         <span className="px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300 font-mono text-[9px] border border-zinc-700/60">
                           Today: +₹{formatINR(b.todaySpent)}
+                        </span>
+                      ) : null}
+
+                      {b.rolledOverAmount && b.rolledOverAmount > 0 ? (
+                        <span className="px-1.5 py-0.2 rounded bg-teal-500/15 text-teal-300 border border-teal-500/30 font-mono text-[9px] flex items-center gap-0.5">
+                          <RotateCcw className="w-2.5 h-2.5" />
+                          +₹{formatINR(b.rolledOverAmount)} Rollover
                         </span>
                       ) : null}
 
@@ -495,13 +571,29 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
           <p className="text-[11px] text-zinc-400 max-w-sm mx-auto mt-1 mb-3.5">
             Set monthly guardrails for dining, rent, or shopping to prevent overspending and keep burn rate under control.
           </p>
-          <button
-            onClick={() => openAddModal()}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-            <span>Set Up First Category Budget</span>
-          </button>
+
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {summary.previousMonthBudgetsCount && summary.previousMonthBudgetsCount > 0 ? (
+              <button
+                onClick={handleRolloverCopy}
+                disabled={submitting}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-zinc-950 font-bold text-xs shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all active:scale-95 disabled:opacity-50"
+              >
+                <RotateCcw className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>
+                  Copy {summary.previousMonthBudgetsCount} Budgets from {summary.previousMonth}
+                </span>
+              </button>
+            ) : null}
+
+            <button
+              onClick={() => openAddModal()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-all active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span>Set Custom Category Budget</span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -620,6 +712,34 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
                   <span>80% (Recommended)</span>
                   <span>95% (Relaxed)</span>
                 </div>
+              </div>
+
+              {/* Rollover Toggle */}
+              <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-zinc-200 flex items-center gap-1.5">
+                    <RotateCcw className="w-3.5 h-3.5 text-teal-400" />
+                    <span>Rollover Unspent Surplus</span>
+                  </div>
+                  <p className="text-[10px] text-zinc-400 mt-0.5">
+                    Unspent headroom will roll over to boost next month's allowance
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={rolloverUnspent}
+                  onClick={() => setRolloverUnspent(!rolloverUnspent)}
+                  className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    rolloverUnspent ? "bg-teal-500" : "bg-zinc-800"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-zinc-950 shadow ring-0 transition duration-200 ease-in-out ${
+                      rolloverUnspent ? "translate-x-4" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
 
               {/* Notes */}
