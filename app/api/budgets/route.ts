@@ -33,6 +33,9 @@ export async function GET(req: NextRequest) {
     const startOfMonth = new Date(year, m, 1, 0, 0, 0, 0);
     const endOfMonth = new Date(year, m + 1, 0, 23, 59, 59, 999);
 
+    const prevDate = new Date(year, m - 1, 1);
+    const prevMonthStr = `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, "0")}`;
+
     const totalDaysInMonth = new Date(year, m + 1, 0).getDate();
     const isCurrentMonth =
       now.getFullYear() === year && now.getMonth() === m;
@@ -57,8 +60,14 @@ export async function GET(req: NextRequest) {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-    // Fetch active budgets for month, actual expense transactions, and today's expenses in parallel
-    const [budgets, spendAggregation, todaySpendAggregation] = await Promise.all([
+    // Fetch active budgets for month, expense transactions, today's expenses, income, and previous month's count in parallel
+    const [
+      budgets,
+      spendAggregation,
+      todaySpendAggregation,
+      incomeAggregation,
+      previousMonthBudgetsCount,
+    ] = await Promise.all([
       Budget.find({ month })
         .populate("category", "name color icon")
         .sort({ monthlyLimit: -1 })
@@ -94,6 +103,21 @@ export async function GET(req: NextRequest) {
             },
           ])
         : Promise.resolve([]),
+      Transaction.aggregate([
+        {
+          $match: {
+            type: "INCOME",
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalIncome: { $sum: "$amount" },
+          },
+        },
+      ]),
+      Budget.countDocuments({ month: prevMonthStr, isActive: true }),
     ]);
 
     // Map spend by category ObjectId string
@@ -115,6 +139,8 @@ export async function GET(req: NextRequest) {
     });
 
     let totalBudget = 0;
+    let totalEffectiveBudget = 0;
+    let totalRolledOver = 0;
     let totalSpent = 0;
 
     const enrichedBudgets = budgets.map((b: any) => {
@@ -123,9 +149,13 @@ export async function GET(req: NextRequest) {
       const spent = catSpend ? catSpend.spent : 0;
       const count = catSpend ? catSpend.count : 0;
       const todaySpent = catId ? (todayMap.get(catId) || 0) : 0;
+
       const limit = Number(b.monthlyLimit);
-      const remaining = limit - spent;
-      const percentUsed = limit > 0 ? Math.round((spent / limit) * 100) : 0;
+      const rolledOver = Number(b.rolledOverAmount) || 0;
+      const effectiveLimit = limit + rolledOver;
+
+      const remaining = effectiveLimit - spent;
+      const percentUsed = effectiveLimit > 0 ? Math.round((spent / effectiveLimit) * 100) : 0;
       const threshold = b.alertThreshold || 80;
 
       const dailyRunRate = daysElapsed > 0 ? Math.round(spent / daysElapsed) : 0;
@@ -135,23 +165,25 @@ export async function GET(req: NextRequest) {
         daysElapsed > 0 ? Math.round((spent / daysElapsed) * totalDaysInMonth) : spent;
 
       let status: "SAFE" | "WARNING" | "OVER_BUDGET" = "SAFE";
-      if (spent >= limit) {
+      if (spent >= effectiveLimit) {
         status = "OVER_BUDGET";
       } else if (percentUsed >= threshold) {
         status = "WARNING";
       }
 
       let burnPace: "ON_TRACK" | "WARNING" | "OVERSPENDING" | "BREACHED" = "ON_TRACK";
-      if (spent >= limit) {
+      if (spent >= effectiveLimit) {
         burnPace = "BREACHED";
-      } else if (projectedMonthEndSpend > limit) {
+      } else if (projectedMonthEndSpend > effectiveLimit) {
         burnPace = "OVERSPENDING";
-      } else if (percentUsed >= threshold || projectedMonthEndSpend >= limit * (threshold / 100)) {
+      } else if (percentUsed >= threshold || projectedMonthEndSpend >= effectiveLimit * (threshold / 100)) {
         burnPace = "WARNING";
       }
 
       if (b.isActive !== false) {
         totalBudget += limit;
+        totalEffectiveBudget += effectiveLimit;
+        totalRolledOver += rolledOver;
         totalSpent += spent;
       }
 
@@ -159,6 +191,9 @@ export async function GET(req: NextRequest) {
         _id: b._id,
         category: b.category,
         monthlyLimit: limit,
+        rolledOverAmount: rolledOver,
+        effectiveLimit,
+        rolloverUnspent: Boolean(b.rolloverUnspent),
         month: b.month,
         alertThreshold: threshold,
         isActive: b.isActive !== false,
@@ -173,14 +208,19 @@ export async function GET(req: NextRequest) {
         burnPace,
         transactionCount: count,
         status,
-        overspendAmount: spent > limit ? spent - limit : 0,
+        overspendAmount: spent > effectiveLimit ? spent - effectiveLimit : 0,
         createdAt: b.createdAt,
         updatedAt: b.updatedAt,
       };
     });
 
-    const totalRemaining = totalBudget - totalSpent;
-    const overallPercent = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+    const totalRemaining = totalEffectiveBudget - totalSpent;
+    const overallPercent = totalEffectiveBudget > 0 ? Math.round((totalSpent / totalEffectiveBudget) * 100) : 0;
+
+    const totalIncome = incomeAggregation[0]?.totalIncome || 0;
+    const unallocatedHeadroom = totalIncome - totalEffectiveBudget;
+    const unallocatedPercent =
+      totalIncome > 0 ? Math.round((unallocatedHeadroom / totalIncome) * 100) : 0;
 
     return NextResponse.json({
       success: true,
@@ -188,9 +228,14 @@ export async function GET(req: NextRequest) {
       data: enrichedBudgets,
       summary: {
         totalBudget,
+        totalEffectiveBudget,
+        totalRolledOver,
         totalSpent,
         totalRemaining,
         overallPercent,
+        totalIncome,
+        unallocatedHeadroom,
+        unallocatedPercent,
         activeBudgetsCount: enrichedBudgets.filter((b) => b.isActive).length,
         overBudgetCount: enrichedBudgets.filter((b) => b.status === "OVER_BUDGET").length,
         warningCount: enrichedBudgets.filter((b) => b.status === "WARNING").length,
@@ -204,6 +249,8 @@ export async function GET(req: NextRequest) {
         projectedTotalSpend:
           daysElapsed > 0 ? Math.round((totalSpent / daysElapsed) * totalDaysInMonth) : totalSpent,
         isCurrentMonth,
+        previousMonth: prevMonthStr,
+        previousMonthBudgetsCount,
       },
     });
   } catch (error: any) {
@@ -219,7 +266,16 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { category, monthlyLimit, month, alertThreshold = 80, notes = "", isActive = true } = body;
+    const {
+      category,
+      monthlyLimit,
+      month,
+      alertThreshold = 80,
+      notes = "",
+      isActive = true,
+      rolloverUnspent = false,
+      rolledOverAmount = 0,
+    } = body;
 
     if (!category || !mongoose.Types.ObjectId.isValid(category)) {
       return NextResponse.json(
@@ -253,6 +309,8 @@ export async function POST(req: NextRequest) {
       {
         monthlyLimit: limitNum,
         alertThreshold: thresholdNum,
+        rolloverUnspent: Boolean(rolloverUnspent),
+        rolledOverAmount: Math.max(0, Number(rolledOverAmount) || 0),
         notes: notes ? notes.trim() : "",
         isActive: Boolean(isActive),
       },

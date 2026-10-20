@@ -14,6 +14,9 @@ export interface BudgetWithMetrics {
   _id: string;
   category: BudgetCategory;
   monthlyLimit: number;
+  rolledOverAmount?: number;
+  effectiveLimit?: number;
+  rolloverUnspent?: boolean;
   month: string;
   alertThreshold: number;
   isActive: boolean;
@@ -35,9 +38,14 @@ export interface BudgetWithMetrics {
 
 export interface BudgetSummary {
   totalBudget: number;
+  totalEffectiveBudget?: number;
+  totalRolledOver?: number;
   totalSpent: number;
   totalRemaining: number;
   overallPercent: number;
+  totalIncome?: number;
+  unallocatedHeadroom?: number;
+  unallocatedPercent?: number;
   activeBudgetsCount: number;
   overBudgetCount: number;
   warningCount: number;
@@ -49,6 +57,8 @@ export interface BudgetSummary {
   avgDailyBurn?: number;
   projectedTotalSpend?: number;
   isCurrentMonth?: boolean;
+  previousMonth?: string;
+  previousMonthBudgetsCount?: number;
 }
 
 export interface SaveBudgetPayload {
@@ -58,6 +68,8 @@ export interface SaveBudgetPayload {
   alertThreshold?: number;
   notes?: string;
   isActive?: boolean;
+  rolloverUnspent?: boolean;
+  rolledOverAmount?: number;
 }
 
 export function useBudgets(selectedMonth?: string) {
@@ -165,6 +177,37 @@ export function useBudgets(selectedMonth?: string) {
     }
   };
 
+  // Rollover / Copy budgets from previous month
+  const rolloverBudgets = async (options?: {
+    fromMonth?: string;
+    carryForwardSurplus?: boolean;
+  }) => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/budgets/rollover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetMonth,
+          fromMonth: options?.fromMonth,
+          carryForwardSurplus: options?.carryForwardSurplus ?? true,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        await fetchBudgets(true);
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
+        return { success: true, seededCount: json.seededCount, message: json.message };
+      } else {
+        return { success: false, message: json.message || "Failed to rollover budgets" };
+      }
+    } catch (err: any) {
+      return { success: false, message: err.message || "Network error executing rollover" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Delete Budget
   const deleteBudget = async (budgetId: string) => {
     try {
@@ -191,6 +234,7 @@ export function useBudgets(selectedMonth?: string) {
     error,
     refresh: () => fetchBudgets(false),
     saveBudget,
+    rolloverBudgets,
     deleteBudget,
   };
 }

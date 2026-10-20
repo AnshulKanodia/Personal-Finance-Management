@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { ShieldCheck, AlertTriangle, ShieldAlert, Sparkles } from "lucide-react";
+import { ShieldCheck, AlertTriangle, ShieldAlert } from "lucide-react";
 import { formatINR } from "@/lib/utils";
 import { useBudgets } from "@/hooks/useBudgets";
 
@@ -91,9 +91,12 @@ export const BudgetImpactPreview: React.FC<BudgetImpactPreviewProps> = ({
   const parsedAmount = typeof amount === "number" ? amount : parseFloat(amount) || 0;
   const isSameCategory = originalCategoryId ? originalCategoryId === categoryId : true;
 
+  const effectiveCap =
+    budget.effectiveLimit || budget.monthlyLimit + (budget.rolledOverAmount || 0);
+
   const impact = computeBudgetImpact({
     currentSpent: budget.spent,
-    monthlyLimit: budget.monthlyLimit,
+    monthlyLimit: effectiveCap,
     alertThreshold: budget.alertThreshold || 80,
     enteredAmount: parsedAmount,
     originalAmount,
@@ -166,7 +169,16 @@ export const BudgetImpactPreview: React.FC<BudgetImpactPreviewProps> = ({
       {/* Detail Footer */}
       <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
         <span>
-          Projected: <span className="text-zinc-200 font-semibold">₹{formatINR(impact.projectedSpent)}</span> / ₹{formatINR(budget.monthlyLimit)}
+          Projected:{" "}
+          <span className="text-zinc-200 font-semibold">
+            ₹{formatINR(impact.projectedSpent)}
+          </span>{" "}
+          / ₹{formatINR(effectiveCap)}
+          {budget.rolledOverAmount && budget.rolledOverAmount > 0 ? (
+            <span className="text-emerald-400 ml-1">
+              (+₹{formatINR(budget.rolledOverAmount)} rollover)
+            </span>
+          ) : null}
         </span>
 
         {isBreach ? (
