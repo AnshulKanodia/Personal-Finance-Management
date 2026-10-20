@@ -45,6 +45,11 @@ const TripManager = dynamic(
   () => import("@/components/TripManager").then((mod) => mod.TripManager),
   { ssr: false }
 );
+const WhatsAppShareModal = dynamic(
+  () => import("@/components/WhatsAppShareModal").then((mod) => mod.WhatsAppShareModal),
+  { ssr: false }
+);
+import { WhatsAppIcon } from "@/components/WhatsAppShareModal";
 
 import { getCached, setCached } from "@/lib/clientCache";
 
@@ -91,6 +96,7 @@ export default function LedgerPage() {
   const [editingDue, setEditingDue] = useState<DueItem | null>(null);
   const [statementModalOpen, setStatementModalOpen] = useState(false);
   const [statementFriendId, setStatementFriendId] = useState<string | undefined>(undefined);
+  const [whatsAppFriend, setWhatsAppFriend] = useState<Friend | null>(null);
 
   const fetchData = useCallback(async (isSilent = false) => {
     try {
@@ -388,6 +394,16 @@ export default function LedgerPage() {
                         <span>Download</span>
                       </button>
 
+                      {/* 2. WhatsApp */}
+                      <button
+                        onClick={() => setWhatsAppFriend(friend)}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-800/90 hover:bg-emerald-950/40 text-zinc-300 hover:text-emerald-400 text-[11px] font-semibold border border-zinc-700/60 hover:border-emerald-500/40 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap transition-all active:scale-95"
+                        title={`Share balance summary on WhatsApp with ${friend.name}`}
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0 fill-current" />
+                        <span>WhatsApp</span>
+                      </button>
+
                       {/* 2. Deposit */}
                       <button
                         onClick={() => openAddDueForFriend(friend._id, "TO_GIVE")}
@@ -579,6 +595,16 @@ export default function LedgerPage() {
                       >
                         <Download className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                         <span>Download</span>
+                      </button>
+
+                      {/* 2. WhatsApp */}
+                      <button
+                        onClick={() => setWhatsAppFriend(friend)}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-850 hover:bg-emerald-950/40 text-zinc-300 hover:text-emerald-400 text-[11px] font-semibold border border-zinc-750 hover:border-emerald-500/40 flex items-center justify-center gap-1 shrink-0 whitespace-nowrap transition-all active:scale-95"
+                        title={`Share balance summary on WhatsApp with ${friend.name}`}
+                      >
+                        <WhatsAppIcon className="w-3.5 h-3.5 text-emerald-400 shrink-0 fill-current" />
+                        <span>WhatsApp</span>
                       </button>
 
                       {/* 2. Deposit */}
@@ -885,6 +911,20 @@ export default function LedgerPage() {
         }}
         initialStatementType="LEDGER"
         initialFriendId={statementFriendId}
+      />
+
+      {/* WhatsApp Share Modal */}
+      <WhatsAppShareModal
+        isOpen={whatsAppFriend !== null}
+        friend={whatsAppFriend}
+        dues={
+          whatsAppFriend
+            ? activeDues.filter(
+                (d) => d.friendId && d.friendId._id === whatsAppFriend._id
+              )
+            : []
+        }
+        onClose={() => setWhatsAppFriend(null)}
       />
     </div>
   );
