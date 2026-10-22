@@ -55,6 +55,10 @@ const BudgetManagerCard = dynamic(
   () => import("@/components/BudgetManagerCard").then((mod) => mod.BudgetManagerCard),
   { ssr: false }
 );
+const SubscriptionTrackerCard = dynamic(
+  () => import("@/components/SubscriptionTrackerCard").then((mod) => mod.SubscriptionTrackerCard),
+  { ssr: false }
+);
 import { usePreferences } from "@/lib/preferences";
 
 import { getCached, setCached } from "@/lib/clientCache";
@@ -252,6 +256,9 @@ export default function DashboardPage() {
       {prefs.showVaultGuard && (
         <BudgetManagerCard currentMonth={currentMonth} />
       )}
+
+      {/* Recurring Subscriptions & Fixed Commitments Widget */}
+      <SubscriptionTrackerCard />
 
       {/* Middle Section: Spend Donut Chart + Payment Modes Breakdown */}
       {(prefs.showCategoryChart || prefs.showPaymentChannels) && (
