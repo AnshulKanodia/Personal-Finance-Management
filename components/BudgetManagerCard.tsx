@@ -195,7 +195,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
   const displayTotalBudget = summary.totalEffectiveBudget || summary.totalBudget;
 
   return (
-    <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-all duration-300">
+    <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-colors duration-200">
       {/* Top Hairline Glow Accent */}
       <div
         className={`absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r ${
@@ -605,7 +605,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
 
             <button
               onClick={() => openAddModal()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-colors active:scale-95"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Set Custom Category Budget</span>
@@ -617,7 +617,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
       {/* Set / Edit Budget Modal */}
       {isModalOpen && mounted && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm transition-opacity"
           onClick={() => setIsModalOpen(false)}
         >
           <div
