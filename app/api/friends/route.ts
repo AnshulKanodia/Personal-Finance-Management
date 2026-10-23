@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const body = await req.json();
-    const { name, phone } = body;
+    const { name, phone, upiId, notes } = body;
 
     if (!name || !name.trim()) {
       return NextResponse.json({ success: false, message: "Friend name is required" }, { status: 400 });
@@ -76,6 +76,8 @@ export async function POST(req: NextRequest) {
     const friend = await Friend.create({
       name: name.trim(),
       phone: phone?.trim() || "",
+      upiId: upiId?.trim() || "",
+      notes: notes?.trim() || "",
     });
 
     return NextResponse.json(
