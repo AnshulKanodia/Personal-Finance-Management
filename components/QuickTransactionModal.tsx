@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Check, IndianRupee, Sparkles, Calendar, Tag, CreditCard } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
 import { BudgetImpactPreview } from "./BudgetImpactPreview";
@@ -37,6 +38,21 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
   const [date, setDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
   const [userManuallySelectedCategory, setUserManuallySelectedCategory] = useState<boolean>(false);
   const [predictedCategoryName, setPredictedCategoryName] = useState<string | null>(null);
 
@@ -117,7 +133,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
         : categories.filter((c) => c.name.toLowerCase().includes("salary"))
       : categories.filter((c) => c.name.toLowerCase() !== "salary");
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,9 +222,15 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
 
   const quickAmounts = [50, 100, 500, 1000, 2000];
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-lg rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -454,6 +476,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
