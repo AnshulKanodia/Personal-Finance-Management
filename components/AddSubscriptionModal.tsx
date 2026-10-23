@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, memo } from "react";
+import React, { useState, useEffect, useCallback, useRef, memo } from "react";
 import { createPortal } from "react-dom";
 import { X, Check, Calendar, Bell } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
@@ -110,18 +110,14 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
   onSuccess,
   subscriptionToEdit,
 }) => {
-  const [name, setName] = useState<string>("");
-  const [amount, setAmount] = useState<string>("");
-  const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "QUARTERLY" | "YEARLY">("MONTHLY");
-  const [dueDay, setDueDay] = useState<number>(1);
   const [categoryId, setCategoryId] = useState<string>("");
   const [categories, setCategories] = useState<Category[]>(() => getCached<Category[]>("all_categories") || []);
   const [paymentMode, setPaymentMode] = useState<"UPI" | "CARD" | "NET_BANKING" | "CASH">("UPI");
   const [reminderDays, setReminderDays] = useState<number>(3);
-  const [notes, setNotes] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [mounted, setMounted] = useState<boolean>(false);
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -167,22 +163,12 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
     if (isOpen) {
       fetchCategories();
       if (subscriptionToEdit) {
-        setName(subscriptionToEdit.name || "");
-        setAmount(subscriptionToEdit.amount?.toString() || "");
-        setBillingCycle(subscriptionToEdit.billingCycle || "MONTHLY");
-        setDueDay(subscriptionToEdit.dueDay || 1);
         setCategoryId(subscriptionToEdit.category?._id || subscriptionToEdit.category || "");
         setPaymentMode(subscriptionToEdit.paymentMode || "UPI");
         setReminderDays(subscriptionToEdit.reminderDaysBefore ?? 3);
-        setNotes(subscriptionToEdit.notes || "");
       } else {
-        setName("");
-        setAmount("");
-        setBillingCycle("MONTHLY");
-        setDueDay(new Date().getDate());
         setPaymentMode("UPI");
         setReminderDays(3);
-        setNotes("");
         const currentCats = getCached<Category[]>("all_categories") || categories;
         if (currentCats.length > 0) {
           const defaultCat =
@@ -194,27 +180,40 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
         }
       }
       setError("");
+
+      const timer = setTimeout(() => {
+        nameInputRef.current?.focus();
+      }, 60);
+      return () => clearTimeout(timer);
     }
   }, [isOpen, subscriptionToEdit, fetchCategories]);
 
   if (!isOpen || !mounted) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    if (!name.trim()) {
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const nameVal = formData.get("name")?.toString().trim() || "";
+    const amountVal = parseFloat(formData.get("amount")?.toString() || "");
+    const billingCycleVal = (formData.get("billingCycle")?.toString() || "MONTHLY") as "MONTHLY" | "QUARTERLY" | "YEARLY";
+    const dueDayVal = parseInt(formData.get("dueDay")?.toString() || "1", 10);
+    const notesVal = formData.get("notes")?.toString().trim() || "";
+
+    if (!nameVal) {
       setError("Please provide a subscription name (e.g. Netflix, Gym, Rent)");
       return;
     }
 
-    const numAmount = parseFloat(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
+    if (isNaN(amountVal) || amountVal <= 0) {
       setError("Please enter a valid amount greater than ₹0");
       return;
     }
 
-    if (dueDay < 1 || dueDay > 31) {
+    if (dueDayVal < 1 || dueDayVal > 31) {
       setError("Due day must be between 1 and 31");
       return;
     }
@@ -230,14 +229,14 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: name.trim(),
-          amount: numAmount,
-          billingCycle,
-          dueDay,
+          name: nameVal,
+          amount: amountVal,
+          billingCycle: billingCycleVal,
+          dueDay: dueDayVal,
           category: categoryId || undefined,
           paymentMode,
           reminderDaysBefore: reminderDays,
-          notes: notes.trim(),
+          notes: notesVal,
         }),
       });
 
@@ -256,17 +255,19 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
     }
   };
 
+  const defaultDueDay = subscriptionToEdit?.dueDay || new Date().getDate();
+
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm transition-opacity"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 transition-opacity"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150"
+        className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150 transform-gpu isolate"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between shrink-0 bg-zinc-950/80 backdrop-blur-sm">
+        <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between shrink-0 bg-zinc-950">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-indigo-400" />
             <span className="text-sm sm:text-base font-bold text-zinc-100">
@@ -282,7 +283,11 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
         </div>
 
         {/* Content */}
-        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-4 overflow-y-auto custom-scrollbar text-xs">
+        <form
+          key={subscriptionToEdit ? subscriptionToEdit._id : "new"}
+          onSubmit={handleSubmit}
+          className="p-4 sm:p-5 space-y-4 overflow-y-auto text-xs"
+        >
           {error && (
             <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium animate-shake">
               {error}
@@ -296,11 +301,12 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
                 Commitment / Service Name
               </label>
               <input
+                ref={nameInputRef}
+                name="name"
                 type="text"
                 placeholder="e.g. Netflix, Wifi, Rent..."
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-indigo-500"
+                defaultValue={subscriptionToEdit?.name || ""}
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -309,13 +315,13 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
                 Amount (₹)
               </label>
               <input
+                name="amount"
                 type="number"
                 step="any"
                 inputMode="decimal"
                 placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 font-mono font-bold focus:outline-none focus:border-indigo-500"
+                defaultValue={subscriptionToEdit?.amount?.toString() || ""}
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 font-mono font-bold focus:outline-none focus:border-indigo-500 transition-colors"
                 required
               />
             </div>
@@ -328,9 +334,9 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
                 Billing Cycle
               </label>
               <select
-                value={billingCycle}
-                onChange={(e) => setBillingCycle(e.target.value as any)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-indigo-500"
+                name="billingCycle"
+                defaultValue={subscriptionToEdit?.billingCycle || "MONTHLY"}
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-indigo-500 transition-colors"
               >
                 <option value="MONTHLY">Monthly</option>
                 <option value="QUARTERLY">Quarterly (Every 3 mo)</option>
@@ -342,12 +348,12 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
                 Due Day of Month (1-31)
               </label>
               <input
+                name="dueDay"
                 type="number"
                 min={1}
                 max={31}
-                value={dueDay}
-                onChange={(e) => setDueDay(parseInt(e.target.value, 10) || 1)}
-                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 font-mono focus:outline-none focus:border-indigo-500"
+                defaultValue={defaultDueDay}
+                className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 font-mono focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
@@ -392,11 +398,11 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
               Notes (Optional)
             </label>
             <input
+              name="notes"
               type="text"
               placeholder="e.g. Shared with roommates, annual plan..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-indigo-500"
+              defaultValue={subscriptionToEdit?.notes || ""}
+              className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
 
