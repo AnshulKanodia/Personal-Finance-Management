@@ -1,7 +1,5 @@
-"use client";
-
-import LedgerPage from "../ledger/page";
+import { redirect } from "next/navigation";
 
 export default function KhaataPage() {
-  return <LedgerPage />;
+  redirect("/ledger");
 }

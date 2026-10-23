@@ -9,6 +9,7 @@ import { VaultLockScreen } from "./VaultLockScreen";
 import { usePathname, useRouter } from "next/navigation";
 
 import { Starfield } from "./Starfield";
+import { initOfflineSyncListeners } from "@/lib/offlineQueue";
 
 // Inactivity timeout: 2.5 minutes (150 seconds)
 const INACTIVITY_TIMEOUT_MS = 2.5 * 60 * 1000;
@@ -120,6 +121,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       sessionStorage.setItem("rupeepulse_last_active", now.toString());
     }
     setIsUnlocked(true);
+  }, []);
+
+  // Initialize offline sync listeners for network reconnection
+  useEffect(() => {
+    const cleanup = initOfflineSyncListeners();
+    return () => {
+      if (cleanup) cleanup();
+    };
   }, []);
 
   // Inactivity timeout tracker (locks after 2-3 mins of no user interaction)
