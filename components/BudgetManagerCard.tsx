@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   ShieldCheck,
   ShieldAlert,
@@ -50,6 +51,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
   } = useBudgets(currentMonth);
 
   // Modal State
+  const [mounted, setMounted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetWithMetrics | null>(null);
   const [categories, setCategories] = useState<CategoryOption[]>([]);
@@ -60,6 +62,21 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
   const [notes, setNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Escape key listener for modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+    };
+    if (isModalOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
 
   // Fetch categories for modal dropdown
   useEffect(() => {
@@ -598,11 +615,17 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
       )}
 
       {/* Set / Edit Budget Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-3xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col">
+      {isModalOpen && mounted && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-md max-h-[90vh] rounded-3xl bg-zinc-950 border border-zinc-800 shadow-2xl flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-zinc-800">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-zinc-850 shrink-0 bg-zinc-950/90 backdrop-blur-sm">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
                   <SlidersHorizontal className="w-4 h-4" />
@@ -617,6 +640,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition-colors"
               >
@@ -625,7 +649,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
             </div>
 
             {/* Modal Form */}
-            <form onSubmit={handleSave} className="p-4 sm:p-5 space-y-4">
+            <form onSubmit={handleSave} className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
               {formError && (
                 <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 flex-shrink-0" />
@@ -757,7 +781,7 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
               </div>
 
               {/* Modal Buttons */}
-              <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-850">
+              <div className="flex items-center justify-between gap-3 pt-3 border-t border-zinc-850 shrink-0">
                 {editingBudget ? (
                   <button
                     type="button"
@@ -791,7 +815,8 @@ export const BudgetManagerCard: React.FC<BudgetManagerCardProps> = ({ currentMon
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

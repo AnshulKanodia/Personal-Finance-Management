@@ -126,9 +126,11 @@ export const SubscriptionTrackerCard: React.FC = () => {
   };
 
   return (
-    <div className="rounded-2xl bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 p-4 sm:p-5 shadow-lg space-y-4">
+    <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-all duration-300 space-y-4">
+      {/* Top Hairline Accent */}
+      <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-indigo-500/20 via-indigo-500 to-indigo-500/20" />
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.2)]">
             <Calendar className="w-4 h-4" />
@@ -148,7 +150,7 @@ export const SubscriptionTrackerCard: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2 shrink-0">
           {meta.totalMonthlyCommitment > 0 && (
             <div className="px-2.5 py-1 rounded-xl bg-zinc-950/80 border border-zinc-800 text-right">
               <span className="text-[10px] text-zinc-500 uppercase tracking-wider block">
@@ -164,7 +166,7 @@ export const SubscriptionTrackerCard: React.FC = () => {
               setEditingSub(null);
               setModalOpen(true);
             }}
-            className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1 shadow-[0_0_12px_rgba(99,102,241,0.25)] transition-all active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 font-semibold text-xs transition-all active:scale-95 shrink-0"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Bill</span>
@@ -192,12 +194,26 @@ export const SubscriptionTrackerCard: React.FC = () => {
           Loading commitments...
         </div>
       ) : subscriptions.length === 0 ? (
-        <div className="p-6 rounded-xl bg-zinc-950/50 border border-zinc-850 text-center">
-          <Clock className="w-6 h-6 text-zinc-600 mx-auto mb-1.5" />
-          <p className="text-xs text-zinc-400 font-medium">No recurring subscriptions yet</p>
-          <p className="text-[11px] text-zinc-500 mt-0.5">
-            Add your Netflix, Rent, Broadband, or SIP commitments to get smart renewal alerts.
+        <div className="text-center py-7 px-4 rounded-xl bg-zinc-950/40 border border-zinc-850 border-dashed">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto mb-2.5">
+            <Clock className="w-5 h-5" />
+          </div>
+          <h3 className="text-xs sm:text-sm font-bold text-zinc-200">
+            No Recurring Commitments Configured
+          </h3>
+          <p className="text-[11px] text-zinc-400 max-w-sm mx-auto mt-1 mb-3.5">
+            Add recurring bills like Netflix, Rent, Broadband, or SIP to track renewal deadlines and single-tap mark as paid.
           </p>
+          <button
+            onClick={() => {
+              setEditingSub(null);
+              setModalOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-all active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Add First Commitment</span>
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">

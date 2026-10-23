@@ -258,7 +258,9 @@ export default function DashboardPage() {
       )}
 
       {/* Recurring Subscriptions & Fixed Commitments Widget */}
-      <SubscriptionTrackerCard />
+      {prefs.showSubscriptions !== false && (
+        <SubscriptionTrackerCard />
+      )}
 
       {/* Middle Section: Spend Donut Chart + Payment Modes Breakdown */}
       {(prefs.showCategoryChart || prefs.showPaymentChannels) && (
