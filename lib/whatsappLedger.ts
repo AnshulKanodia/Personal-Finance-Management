@@ -181,9 +181,25 @@ export function buildWhatsAppShareUrl(phone: string | undefined, message: string
   const encodedText = encodeURIComponent(message);
 
   if (sanitized) {
-    return `https://wa.me/${sanitized}?text=${encodedText}`;
+    return `https://api.whatsapp.com/send?phone=${sanitized}&text=${encodedText}`;
   }
 
   // Generic WhatsApp share URL that prompts user to pick contact
-  return `https://wa.me/?text=${encodedText}`;
+  return `https://api.whatsapp.com/send?text=${encodedText}`;
+}
+
+/**
+ * Builds the native mobile WhatsApp app protocol deep-link (whatsapp://).
+ * Directly launches the native mobile application on Android and iOS without
+ * any intermediate HTTP 302 redirects, ensuring 100% emoji rendering accuracy.
+ */
+export function buildNativeWhatsAppUrl(phone: string | undefined, message: string): string {
+  const sanitized = sanitizeWhatsAppPhone(phone);
+  const encodedText = encodeURIComponent(message);
+
+  if (sanitized) {
+    return `whatsapp://send?phone=${sanitized}&text=${encodedText}`;
+  }
+
+  return `whatsapp://send?text=${encodedText}`;
 }

@@ -130,10 +130,10 @@ function buildWhatsAppShareUrl(phone, message) {
   const encodedText = encodeURIComponent(message);
 
   if (sanitized) {
-    return `https://wa.me/${sanitized}?text=${encodedText}`;
+    return `https://api.whatsapp.com/send?phone=${sanitized}&text=${encodedText}`;
   }
 
-  return `https://wa.me/?text=${encodedText}`;
+  return `https://api.whatsapp.com/send?text=${encodedText}`;
 }
 
 // ======================== TEST RUNNER ========================
@@ -232,10 +232,10 @@ console.log("✅ Test 6 Passed: Large entry lists are cleanly capped at 5 with o
 
 // Test 7: WhatsApp Share URL with phone and without phone
 const urlWithPhone = buildWhatsAppShareUrl("9876543210", "Test message");
-assert.ok(urlWithPhone.startsWith("https://wa.me/919876543210?text=Test%20message"));
+assert.ok(urlWithPhone.startsWith("https://api.whatsapp.com/send?phone=919876543210&text=Test%20message"));
 
 const urlWithoutPhone = buildWhatsAppShareUrl("", "Test message");
-assert.strictEqual(urlWithoutPhone, "https://wa.me/?text=Test%20message");
+assert.strictEqual(urlWithoutPhone, "https://api.whatsapp.com/send?text=Test%20message");
 console.log("✅ Test 7 Passed: WhatsApp deep-link correctly generates contact-specific or general picker URLs.");
 
 console.log("\n🎯 All Day 6 WhatsApp Ledger Share tests passed successfully with 100% precision!");

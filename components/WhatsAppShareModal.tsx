@@ -63,6 +63,21 @@ export const WhatsAppShareModal: React.FC<WhatsAppShareModalProps> = ({
   const [saveUpiDefault, setSaveUpiDefault] = useState<boolean>(true);
   const [copied, setCopied] = useState<boolean>(false);
   const [canNativeShare, setCanNativeShare] = useState<boolean>(false);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   // Initialize data on modal open
   useEffect(() => {
@@ -145,14 +160,17 @@ export const WhatsAppShareModal: React.FC<WhatsAppShareModalProps> = ({
     onClose();
   };
 
-  if (!isOpen || !friend) return null;
+  if (!isOpen || !friend || !mounted) return null;
 
   const net = friend.netBalance;
   const absNet = Math.abs(net);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div
+        className="relative w-full max-w-lg rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between shrink-0 bg-zinc-950/80 backdrop-blur-sm">
           <div className="flex items-center gap-2.5">
