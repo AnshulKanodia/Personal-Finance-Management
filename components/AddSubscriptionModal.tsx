@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
-import { X, Check, Calendar, CreditCard, Bell, Sparkles } from "lucide-react";
+import { X, Check, Calendar, Bell } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { getCached, setCached } from "@/lib/clientCache";
 
 interface Category {
   _id: string;
@@ -19,6 +20,90 @@ interface AddSubscriptionModalProps {
   subscriptionToEdit?: any;
 }
 
+const CategorySelector = memo(({
+  categories,
+  selectedId,
+  onSelect,
+}: {
+  categories: Category[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) => {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+        Category
+      </label>
+      <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto pr-1">
+        {categories.map((cat) => {
+          const isSelected = selectedId === cat._id;
+          return (
+            <button
+              type="button"
+              key={cat._id}
+              onClick={() => onSelect(cat._id)}
+              className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-colors ${
+                isSelected
+                  ? "border-indigo-500/50 bg-indigo-500/10 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
+                  : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700"
+              }`}
+            >
+              <div
+                className="p-1 rounded-lg shrink-0"
+                style={{
+                  backgroundColor: `${cat.color}20`,
+                  color: cat.color,
+                }}
+              >
+                <CategoryIcon name={cat.icon} className="w-3.5 h-3.5" />
+              </div>
+              <span className="text-[11px] font-medium truncate">{cat.name}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+CategorySelector.displayName = "CategorySelector";
+
+const PaymentModeSelector = memo(({
+  mode,
+  onChange,
+}: {
+  mode: string;
+  onChange: (m: "UPI" | "CARD" | "NET_BANKING" | "CASH") => void;
+}) => {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-zinc-300 mb-1">
+        Payment Method
+      </label>
+      <div className="grid grid-cols-3 gap-2">
+        {[
+          { id: "UPI", label: "UPI" },
+          { id: "CARD", label: "Card / NetBanking" },
+          { id: "CASH", label: "Cash" },
+        ].map((m) => (
+          <button
+            type="button"
+            key={m.id}
+            onClick={() => onChange(m.id as any)}
+            className={`py-2 px-2 rounded-xl text-xs font-semibold border transition-colors text-center ${
+              mode === m.id
+                ? "text-indigo-400 border-indigo-500/40 bg-indigo-500/10 shadow-[0_0_10px_rgba(99,102,241,0.2)]"
+                : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700"
+            }`}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+});
+PaymentModeSelector.displayName = "PaymentModeSelector";
+
 export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
   isOpen,
   onClose,
@@ -30,7 +115,7 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
   const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "QUARTERLY" | "YEARLY">("MONTHLY");
   const [dueDay, setDueDay] = useState<number>(1);
   const [categoryId, setCategoryId] = useState<string>("");
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(() => getCached<Category[]>("all_categories") || []);
   const [paymentMode, setPaymentMode] = useState<"UPI" | "CARD" | "NET_BANKING" | "CASH">("UPI");
   const [reminderDays, setReminderDays] = useState<number>(3);
   const [notes, setNotes] = useState<string>("");
@@ -40,6 +125,32 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  const handleSelectCategory = useCallback((id: string) => {
+    setCategoryId(id);
+  }, []);
+
+  const handlePaymentModeChange = useCallback((m: "UPI" | "CARD" | "NET_BANKING" | "CASH") => {
+    setPaymentMode(m);
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    const cached = getCached<Category[]>("all_categories");
+    if (cached && cached.length > 0) {
+      setCategories(cached);
+      return;
+    }
+    try {
+      const res = await fetch("/api/categories");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        setCategories(json.data);
+        setCached("all_categories", json.data);
+      }
+    } catch (e) {
+      console.error("Failed to load categories", e);
+    }
   }, []);
 
   useEffect(() => {
@@ -72,30 +183,19 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
         setPaymentMode("UPI");
         setReminderDays(3);
         setNotes("");
-      }
-      setError("");
-    }
-  }, [isOpen, subscriptionToEdit]);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await fetch("/api/categories");
-      const json = await res.json();
-      if (json.success && json.data.length > 0) {
-        setCategories(json.data);
-        if (!subscriptionToEdit && !categoryId) {
+        const currentCats = getCached<Category[]>("all_categories") || categories;
+        if (currentCats.length > 0) {
           const defaultCat =
-            json.data.find((c: Category) => c.name.toLowerCase().includes("subscript")) ||
-            json.data.find((c: Category) => c.name.toLowerCase().includes("entertain")) ||
-            json.data.find((c: Category) => c.name.toLowerCase().includes("bill")) ||
-            json.data[0];
+            currentCats.find((c) => c.name.toLowerCase().includes("subscript")) ||
+            currentCats.find((c) => c.name.toLowerCase().includes("entertain")) ||
+            currentCats.find((c) => c.name.toLowerCase().includes("bill")) ||
+            currentCats[0];
           if (defaultCat) setCategoryId(defaultCat._id);
         }
       }
-    } catch (e) {
-      console.error("Failed to load categories", e);
+      setError("");
     }
-  };
+  }, [isOpen, subscriptionToEdit, fetchCategories]);
 
   if (!isOpen || !mounted) return null;
 
@@ -158,11 +258,11 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm transition-opacity"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-md rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -201,7 +301,6 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-100 focus:outline-none focus:border-indigo-500"
-                autoFocus
                 required
               />
             </div>
@@ -253,67 +352,18 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
             </div>
           </div>
 
-          {/* Category Selector */}
-          <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-              Category
-            </label>
-            <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto pr-1">
-              {categories.map((cat) => {
-                const isSelected = categoryId === cat._id;
-                return (
-                  <button
-                    type="button"
-                    key={cat._id}
-                    onClick={() => setCategoryId(cat._id)}
-                    className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all ${
-                      isSelected
-                        ? "border-indigo-500/50 bg-indigo-500/10 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.2)]"
-                        : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700"
-                    }`}
-                  >
-                    <div
-                      className="p-1 rounded-lg shrink-0"
-                      style={{
-                        backgroundColor: `${cat.color}20`,
-                        color: cat.color,
-                      }}
-                    >
-                      <CategoryIcon name={cat.icon} className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-[11px] font-medium truncate">{cat.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Category Selector (Memoized) */}
+          <CategorySelector
+            categories={categories}
+            selectedId={categoryId}
+            onSelect={handleSelectCategory}
+          />
 
-          {/* Payment Mode Selector */}
-          <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1">
-              Payment Method
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { id: "UPI", label: "UPI" },
-                { id: "CARD", label: "Card / NetBanking" },
-                { id: "CASH", label: "Cash" },
-              ].map((m) => (
-                <button
-                  type="button"
-                  key={m.id}
-                  onClick={() => setPaymentMode(m.id as any)}
-                  className={`py-2 px-2 rounded-xl text-xs font-semibold border transition-all text-center ${
-                    paymentMode === m.id
-                      ? "text-indigo-400 border-indigo-500/40 bg-indigo-500/10 shadow-[0_0_10px_rgba(99,102,241,0.2)]"
-                      : "border-zinc-800 bg-zinc-900/60 text-zinc-400 hover:border-zinc-700"
-                  }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Payment Mode Selector (Memoized) */}
+          <PaymentModeSelector
+            mode={paymentMode}
+            onChange={handlePaymentModeChange}
+          />
 
           {/* Reminder Days */}
           <div>
@@ -350,21 +400,27 @@ export const AddSubscriptionModal: React.FC<AddSubscriptionModalProps> = ({
             />
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-2">
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-850">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 text-zinc-300 text-xs font-semibold transition-colors"
+            >
+              Cancel
+            </button>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl font-bold text-xs sm:text-sm bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white transition-all flex items-center justify-center gap-2 active:scale-98 shadow-[0_0_20px_rgba(99,102,241,0.3)] disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-[0_0_12px_rgba(99,102,241,0.3)] transition-all active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
             >
               {loading ? (
                 <span>Saving...</span>
               ) : (
                 <>
-                  <Check className="w-4 h-4 stroke-[3]" />
-                  <span>
-                    {subscriptionToEdit ? "Save Changes" : "Create Subscription"}
-                  </span>
+                  <Check className="w-4 h-4 stroke-[2.5]" />
+                  <span>{subscriptionToEdit ? "Update Bill" : "Save Commitment"}</span>
                 </>
               )}
             </button>

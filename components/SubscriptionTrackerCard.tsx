@@ -126,7 +126,7 @@ export const SubscriptionTrackerCard: React.FC = () => {
   };
 
   return (
-    <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-all duration-300 space-y-4">
+    <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-zinc-800 relative overflow-hidden transition-colors duration-200 space-y-4">
       {/* Top Hairline Accent */}
       <div className="absolute top-0 inset-x-0 h-[1.5px] bg-gradient-to-r from-indigo-500/20 via-indigo-500 to-indigo-500/20" />
       {/* Header */}
@@ -209,7 +209,7 @@ export const SubscriptionTrackerCard: React.FC = () => {
               setEditingSub(null);
               setModalOpen(true);
             }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-all active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-200 font-semibold text-xs transition-colors active:scale-95"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add First Commitment</span>
