@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 
 export interface DashboardPreferences {
   stealthMode: boolean;
+  showVaultGuard: boolean;
+  showSubscriptions: boolean;
   showSpendingVelocity: boolean;
   velocityPeriod: "WEEKLY" | "MONTHLY";
   showCategoryChart: boolean;
@@ -14,6 +16,8 @@ export interface DashboardPreferences {
 
 export const DEFAULT_PREFERENCES: DashboardPreferences = {
   stealthMode: false,
+  showVaultGuard: true,
+  showSubscriptions: true,
   showSpendingVelocity: true,
   velocityPeriod: "WEEKLY",
   showCategoryChart: true,

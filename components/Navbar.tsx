@@ -15,8 +15,11 @@ import {
   User,
   Eye,
   EyeOff,
+  Cloud,
+  CloudOff,
 } from "lucide-react";
 import { usePreferences } from "@/lib/preferences";
+import { getOfflineQueueCount } from "@/lib/offlineQueue";
 
 interface NavbarProps {
   onOpenQuickAdd?: () => void;
@@ -28,6 +31,37 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
   const { prefs, toggleStealth } = usePreferences();
+
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return navigator.onLine;
+  });
+  const [queuedCount, setQueuedCount] = useState<number>(0);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    const updateQueue = async () => {
+      const count = await getOfflineQueueCount();
+      setQueuedCount(count);
+    };
+
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+    window.addEventListener("rupeepulse_offline_queue_changed", updateQueue);
+
+    updateQueue();
+
+    return () => {
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
+      window.removeEventListener("rupeepulse_offline_queue_changed", updateQueue);
+    };
+  }, []);
 
   // Do not render Navbar on login page
   if (pathname === "/login") return null;
@@ -63,8 +97,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_20px_rgba(16,185,129,0.25)] transition-transform group-hover:scale-105">
-            <div className="w-full h-full bg-[#08080c] rounded-[10px] flex items-center justify-center">
-              <IndianRupee className="w-5 h-5 text-emerald-400 group-hover:text-emerald-300 transition-colors stroke-[2.2]" />
+            <div className="w-full h-full bg-[#08080c] rounded-[10px] flex items-center justify-center p-1">
+              <img
+                src="/icons/wallet-icon.png"
+                alt="RupeePulse"
+                className="w-full h-full object-contain"
+              />
             </div>
           </div>
           <div>
@@ -99,6 +137,19 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenQuickAdd, onLock }) => {
 
         {/* Action buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Offline / Sync Indicator */}
+          {!isOnline ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[10px] font-semibold animate-pulse">
+              <CloudOff className="w-3.5 h-3.5" />
+              <span>Offline{queuedCount > 0 ? ` (${queuedCount})` : ""}</span>
+            </div>
+          ) : queuedCount > 0 ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-sky-500/10 border border-sky-500/25 text-sky-400 text-[10px] font-semibold">
+              <Cloud className="w-3.5 h-3.5 animate-bounce" />
+              <span>Syncing ({queuedCount})...</span>
+            </div>
+          ) : null}
+
           {onOpenQuickAdd && (
             <button
               onClick={onOpenQuickAdd}

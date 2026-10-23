@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Lock, IndianRupee, Delete, ArrowRight } from "lucide-react";
+import { Lock, Delete, ArrowRight } from "lucide-react";
 import { RupeeLoader } from "@/components/RupeeLoader";
 
 function LoginForm() {
@@ -109,8 +109,12 @@ function LoginForm() {
       {/* App Logo & Header */}
       <div className="flex flex-col items-center mb-8 text-center">
         <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-emerald-500/40 p-0.5 shadow-[0_0_30px_rgba(16,185,129,0.3)] mb-4">
-          <div className="w-full h-full bg-[#08080c] rounded-[14px] flex items-center justify-center">
-            <IndianRupee className="w-8 h-8 text-emerald-400 stroke-[2.2]" />
+          <div className="w-full h-full bg-[#08080c] rounded-[14px] flex items-center justify-center p-1.5">
+            <img
+              src="/icons/wallet-icon.png"
+              alt="RupeePulse"
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
         <h1 className="text-2xl font-black tracking-tight text-zinc-100">RupeePulse</h1>

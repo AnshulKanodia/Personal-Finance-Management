@@ -51,6 +51,14 @@ const EditTransactionModal = dynamic(
   () => import("@/components/EditTransactionModal").then((mod) => mod.EditTransactionModal),
   { ssr: false }
 );
+const BudgetManagerCard = dynamic(
+  () => import("@/components/BudgetManagerCard").then((mod) => mod.BudgetManagerCard),
+  { ssr: false }
+);
+const SubscriptionTrackerCard = dynamic(
+  () => import("@/components/SubscriptionTrackerCard").then((mod) => mod.SubscriptionTrackerCard),
+  { ssr: false }
+);
 import { usePreferences } from "@/lib/preferences";
 
 import { getCached, setCached } from "@/lib/clientCache";
@@ -242,6 +250,16 @@ export default function DashboardPage() {
       {/* Spending Velocity Gauge (Customizable Widget) */}
       {prefs.showSpendingVelocity && data?.velocity && (
         <SpendingVelocityCard velocity={data.velocity} />
+      )}
+
+      {/* Vault Guard Category Budgets Widget */}
+      {prefs.showVaultGuard && (
+        <BudgetManagerCard currentMonth={currentMonth} />
+      )}
+
+      {/* Recurring Subscriptions & Fixed Commitments Widget */}
+      {prefs.showSubscriptions !== false && (
+        <SubscriptionTrackerCard />
       )}
 
       {/* Middle Section: Spend Donut Chart + Payment Modes Breakdown */}

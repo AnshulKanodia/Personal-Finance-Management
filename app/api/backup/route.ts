@@ -5,6 +5,7 @@ import Friend from "@/models/Friend";
 import FriendDue from "@/models/FriendDue";
 import Transaction from "@/models/Transaction";
 import Group from "@/models/Group";
+import Budget from "@/models/Budget";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +14,13 @@ export async function GET(req: NextRequest) {
     await connectToDatabase();
 
     // Fetch all collections in parallel
-    const [categories, friends, friendDues, transactions, groups] = await Promise.all([
+    const [categories, friends, friendDues, transactions, groups, budgets] = await Promise.all([
       Category.find().lean(),
       Friend.find().lean(),
       FriendDue.find().lean(),
       Transaction.find().lean(),
       Group.find().lean(),
+      Budget.find().lean(),
     ]);
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -26,7 +28,7 @@ export async function GET(req: NextRequest) {
 
     const backupPayload = {
       app: "RupeePulse",
-      version: "1.4.0",
+      version: "1.5.0",
       format: "RupeePulse-Vault-Backup-v1",
       exportedAt: new Date().toISOString(),
       counts: {
@@ -35,6 +37,7 @@ export async function GET(req: NextRequest) {
         friendDues: friendDues.length,
         transactions: transactions.length,
         groups: groups.length,
+        budgets: budgets.length,
       },
       data: {
         categories,
@@ -42,6 +45,7 @@ export async function GET(req: NextRequest) {
         friendDues,
         transactions,
         groups,
+        budgets,
       },
     };
 

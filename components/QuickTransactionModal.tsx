@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Check, IndianRupee, Sparkles, Calendar, Tag, CreditCard } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
+import { BudgetImpactPreview } from "./BudgetImpactPreview";
 import { clearCache } from "@/lib/clientCache";
+import { predictCategoryFromNote } from "@/lib/merchantPredictor";
+import { enqueueOfflineRequest } from "@/lib/offlineQueue";
 
 interface Category {
   _id: string;
@@ -34,11 +38,30 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
   const [date, setDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+  const [userManuallySelectedCategory, setUserManuallySelectedCategory] = useState<boolean>(false);
+  const [predictedCategoryName, setPredictedCategoryName] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       const activeType = initialType;
       setType(activeType);
+      setUserManuallySelectedCategory(false);
+      setPredictedCategoryName(null);
       fetchCategories(activeType);
     }
   }, [isOpen, initialType]);
@@ -68,6 +91,8 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
 
   const handleTypeToggle = (newType: "EXPENSE" | "INCOME") => {
     setType(newType);
+    setUserManuallySelectedCategory(false);
+    setPredictedCategoryName(null);
     const salary = categories.find((c) => c.name.toLowerCase() === "salary");
     if (newType === "INCOME") {
       if (salary) setCategoryId(salary._id);
@@ -75,6 +100,29 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
       const firstExp = categories.find((c) => c.name.toLowerCase() !== "salary") || categories[0];
       if (firstExp) setCategoryId(firstExp._id);
     }
+  };
+
+  const handleNotesChange = (val: string) => {
+    setNotes(val);
+    if (!userManuallySelectedCategory && type === "EXPENSE") {
+      const matched = predictCategoryFromNote(val, categories);
+      if (matched) {
+        setCategoryId(matched._id);
+        setPredictedCategoryName(matched.name);
+      } else {
+        setPredictedCategoryName(null);
+      }
+    }
+  };
+
+  const handleAddDenomination = (val: number) => {
+    const current = parseFloat(amount) || 0;
+    const next = current + val;
+    setAmount(next.toString());
+  };
+
+  const handleClearAmount = () => {
+    setAmount("");
   };
 
   const salaryCategory = categories.find((c) => c.name.toLowerCase() === "salary");
@@ -85,7 +133,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
         : categories.filter((c) => c.name.toLowerCase().includes("salary"))
       : categories.filter((c) => c.name.toLowerCase() !== "salary");
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,19 +150,43 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
       return;
     }
 
+    const payload = {
+      amount: numericAmount,
+      type,
+      paymentMode,
+      category: categoryId,
+      notes,
+      date,
+    };
+
     try {
       setLoading(true);
+
+      // 1. If currently offline, enqueue immediately to IndexedDB
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        await enqueueOfflineRequest("/api/transactions", "POST", payload);
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
+        window.dispatchEvent(
+          new CustomEvent("rupeepulse_toast", {
+            detail: {
+              type: "info",
+              message: "Saved offline! Will auto-sync when connection restores. ⚡",
+            },
+          })
+        );
+        setAmount("");
+        setNotes("");
+        onSuccess();
+        onClose();
+        return;
+      }
+
+      // 2. If online, attempt live fetch
       const res = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: numericAmount,
-          type,
-          paymentMode,
-          category: categoryId,
-          notes,
-          date,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -131,17 +203,34 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      // 3. If network dropped mid-flight, catch network error and safely enqueue offline
+      try {
+        await enqueueOfflineRequest("/api/transactions", "POST", payload);
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
+        setAmount("");
+        setNotes("");
+        onSuccess();
+        onClose();
+      } catch (queueErr) {
+        setError(err.message || "An error occurred");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const quickAmounts = [100, 200, 500, 1000, 2000];
+  const quickAmounts = [50, 100, 500, 1000, 2000];
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-lg rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-zinc-850 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -201,6 +290,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
               <input
                 type="number"
                 step="any"
+                inputMode="decimal"
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -213,18 +303,27 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
               />
             </div>
 
-            {/* Quick Amount Chips */}
-            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1">
+            {/* Rapid Speed Dial Denomination Chips */}
+            <div className="flex items-center gap-1.5 mt-2 overflow-x-auto pb-1 no-scrollbar">
               {quickAmounts.map((q) => (
                 <button
                   type="button"
                   key={q}
-                  onClick={() => setAmount(q.toString())}
-                  className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 transition-colors"
+                  onClick={() => handleAddDenomination(q)}
+                  className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300 hover:text-white hover:border-zinc-700 active:scale-95 transition-all shrink-0"
                 >
-                  +{q}
+                  +₹{q}
                 </button>
               ))}
+              {amount && (
+                <button
+                  type="button"
+                  onClick={handleClearAmount}
+                  className="px-2 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-semibold text-rose-400 hover:bg-rose-500/20 shrink-0 transition-colors"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </div>
 
@@ -272,9 +371,17 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
 
           {/* Category Selector */}
           <div>
-            <label className="block text-xs font-medium text-zinc-400 mb-1.5">
-              Category {type === "INCOME" ? "(Salary)" : "(Alphabetical)"}
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-zinc-400">
+                Category {type === "INCOME" ? "(Salary)" : "(Alphabetical)"}
+              </label>
+              {predictedCategoryName && (
+                <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1 animate-in fade-in duration-200">
+                  <Sparkles className="w-3 h-3 text-emerald-400" />
+                  <span>Auto-matched: {predictedCategoryName}</span>
+                </span>
+              )}
+            </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-40 overflow-y-auto pr-1">
               {displayCategories.map((cat) => {
                 const isSelected = categoryId === cat._id;
@@ -282,7 +389,11 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
                   <button
                     type="button"
                     key={cat._id}
-                    onClick={() => setCategoryId(cat._id)}
+                    onClick={() => {
+                      setCategoryId(cat._id);
+                      setUserManuallySelectedCategory(true);
+                      setPredictedCategoryName(null);
+                    }}
                     className={`flex flex-col items-center justify-center p-2 rounded-xl border text-center transition-all ${
                       isSelected
                         ? "border-emerald-500/50 bg-emerald-500/10 text-zinc-100 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
@@ -307,6 +418,14 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
             </div>
           </div>
 
+          {/* Real-time Budget Impact Preview & Soft Limit Interceptor */}
+          <BudgetImpactPreview
+            type={type}
+            categoryId={categoryId}
+            amount={amount}
+            date={date}
+          />
+
           {/* Date & Notes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -328,7 +447,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
                 type="text"
                 placeholder="e.g. Swiggy lunch, Petrol..."
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => handleNotesChange(e.target.value)}
                 className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs text-zinc-200 focus:outline-none focus:border-emerald-500 placeholder:text-zinc-600"
               />
             </div>
@@ -357,6 +476,7 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

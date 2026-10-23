@@ -17,6 +17,15 @@ const nextConfig = {
         ? { exclude: ["error", "warn"] }
         : false,
   },
+  async redirects() {
+    return [
+      {
+        source: "/khaata",
+        destination: "/ledger",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
