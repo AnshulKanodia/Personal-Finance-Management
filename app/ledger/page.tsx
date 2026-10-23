@@ -49,6 +49,10 @@ const WhatsAppShareModal = dynamic(
   () => import("@/components/WhatsAppShareModal").then((mod) => mod.WhatsAppShareModal),
   { ssr: false }
 );
+const EditFriendModal = dynamic(
+  () => import("@/components/EditFriendModal").then((mod) => mod.EditFriendModal),
+  { ssr: false }
+);
 import { WhatsAppIcon } from "@/components/WhatsAppShareModal";
 
 import { getCached, setCached } from "@/lib/clientCache";
@@ -57,6 +61,8 @@ interface Friend {
   _id: string;
   name: string;
   phone?: string;
+  upiId?: string;
+  notes?: string;
   toGive: number;
   toTake: number;
   netBalance: number;
@@ -94,6 +100,7 @@ export default function LedgerPage() {
   const [settleFriend, setSettleFriend] = useState<Friend | null>(null);
   const [expandedFriendId, setExpandedFriendId] = useState<string | null>(null);
   const [editingDue, setEditingDue] = useState<DueItem | null>(null);
+  const [editingFriend, setEditingFriend] = useState<Friend | null>(null);
   const [statementModalOpen, setStatementModalOpen] = useState(false);
   const [statementFriendId, setStatementFriendId] = useState<string | undefined>(undefined);
   const [whatsAppFriend, setWhatsAppFriend] = useState<Friend | null>(null);
@@ -351,7 +358,16 @@ export default function LedgerPage() {
                           {friend.name[0]?.toUpperCase() || "F"}
                         </div>
                         <div>
-                          <h4 className="text-base font-bold text-zinc-100">{friend.name}</h4>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="text-base font-bold text-zinc-100">{friend.name}</h4>
+                            <button
+                              onClick={() => setEditingFriend(friend)}
+                              className="p-1 rounded-md text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800 transition-colors"
+                              title={`Edit ${friend.name}'s details`}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                           {friend.phone && (
                             <div className="flex items-center gap-1 text-[11px] text-zinc-500 mt-0.5">
                               <Phone className="w-3 h-3 text-zinc-600" />
@@ -554,7 +570,16 @@ export default function LedgerPage() {
                           {friend.name[0]?.toUpperCase() || "F"}
                         </div>
                         <div>
-                          <h4 className="text-base font-bold text-zinc-100">{friend.name}</h4>
+                          <div className="flex items-center gap-1.5">
+                            <h4 className="text-base font-bold text-zinc-100">{friend.name}</h4>
+                            <button
+                              onClick={() => setEditingFriend(friend)}
+                              className="p-1 rounded-md text-zinc-500 hover:text-emerald-400 hover:bg-zinc-800 transition-colors"
+                              title={`Edit ${friend.name}'s details`}
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                           {friend.phone && (
                             <div className="flex items-center gap-1 text-[11px] text-zinc-500 mt-0.5">
                               <Phone className="w-3 h-3 text-zinc-600" />
@@ -721,6 +746,59 @@ export default function LedgerPage() {
               })
             )}
           </div>
+
+          {/* Settled / Zero-Balance Friends section */}
+          {settledFriends.length > 0 && (
+            <div className="lg:col-span-2 pt-4 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                    All Settled Contacts ({settledFriends.length})
+                  </h4>
+                </div>
+                <span className="text-[11px] text-zinc-500 font-mono">₹0 net balance</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {settledFriends.map((friend) => (
+                  <div
+                    key={friend._id}
+                    className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-850 hover:border-zinc-750 transition-all flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-zinc-800 text-zinc-300 font-bold text-xs flex items-center justify-center shrink-0">
+                        {friend.name[0]?.toUpperCase() || "F"}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-zinc-200 truncate">{friend.name}</div>
+                        <div className="text-[10px] text-zinc-500 font-mono truncate">
+                          {friend.phone || "All settled"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => openAddDueForFriend(friend._id, "TO_TAKE")}
+                        className="p-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-750 text-zinc-400 hover:text-emerald-400 transition-colors"
+                        title="Add split entry"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setEditingFriend(friend)}
+                        className="p-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-750 text-zinc-400 hover:text-zinc-100 transition-colors"
+                        title={`Edit ${friend.name}'s details`}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : activeTab === "HISTORY" ? (
         /* Settled History Tab - Revamped for high visibility */
@@ -925,6 +1003,14 @@ export default function LedgerPage() {
             : []
         }
         onClose={() => setWhatsAppFriend(null)}
+      />
+
+      {/* Edit Friend Modal */}
+      <EditFriendModal
+        isOpen={editingFriend !== null}
+        friend={editingFriend}
+        onClose={() => setEditingFriend(null)}
+        onSuccess={() => fetchData()}
       />
     </div>
   );

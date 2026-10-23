@@ -3,6 +3,8 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IFriend extends Document {
   name: string;
   phone?: string;
+  upiId?: string;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,6 +17,16 @@ const FriendSchema = new Schema<IFriend>(
       trim: true,
     },
     phone: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    upiId: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    notes: {
       type: String,
       trim: true,
       default: "",
