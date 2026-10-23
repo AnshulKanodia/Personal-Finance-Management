@@ -8,6 +8,7 @@ import {
   Tags,
   Users,
   Lock,
+  Edit2,
   Edit3,
   Trash2,
   Plus,
@@ -45,11 +46,17 @@ const VaultRestoreModal = dynamic(
   () => import("@/components/VaultRestoreModal").then((mod) => mod.VaultRestoreModal),
   { ssr: false }
 );
+const EditFriendModal = dynamic(
+  () => import("@/components/EditFriendModal").then((mod) => mod.EditFriendModal),
+  { ssr: false }
+);
 
 interface Friend {
   _id: string;
   name: string;
   phone?: string;
+  upiId?: string;
+  notes?: string;
   netBalance: number;
 }
 
@@ -80,6 +87,7 @@ export default function ProfilePage() {
 
   // Friends State
   const [friends, setFriends] = useState<Friend[]>([]);
+  const [editingFriend, setEditingFriend] = useState<Friend | null>(null);
   const [loadingFriends, setLoadingFriends] = useState<boolean>(true);
   const [isAddFriendOpen, setIsAddFriendOpen] = useState<boolean>(false);
   const [newFriendName, setNewFriendName] = useState<string>("");
@@ -550,6 +558,14 @@ export default function ProfilePage() {
                   </div>
 
                   <button
+                    onClick={() => setEditingFriend(friend)}
+                    className="p-1.5 rounded-lg text-zinc-500 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                    title={`Edit ${friend.name}`}
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
                     onClick={() => handleDeleteFriend(friend._id, friend.name)}
                     className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                     title={`Remove ${friend.name}`}
@@ -758,6 +774,14 @@ export default function ProfilePage() {
           fetchFriends();
           fetchCategories();
         }}
+      />
+
+      {/* Edit Friend Details Modal */}
+      <EditFriendModal
+        isOpen={editingFriend !== null}
+        friend={editingFriend}
+        onClose={() => setEditingFriend(null)}
+        onSuccess={() => fetchFriends()}
       />
     </div>
   );
