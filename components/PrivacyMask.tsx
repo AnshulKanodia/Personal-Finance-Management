@@ -9,7 +9,7 @@ interface PrivacyMaskProps {
   maskText?: string;
 }
 
-export const PrivacyMask: React.FC<PrivacyMaskProps> = ({
+export const PrivacyMask: React.FC<PrivacyMaskProps> = React.memo(({
   children,
   className = "",
   maskText,
@@ -48,4 +48,4 @@ export const PrivacyMask: React.FC<PrivacyMaskProps> = ({
       </span>
     </span>
   );
-};
+});

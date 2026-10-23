@@ -6,11 +6,11 @@ interface CategoryIconProps extends LucideProps {
   name?: string;
 }
 
-export const CategoryIcon: React.FC<CategoryIconProps> = ({ name = "Tag", ...props }) => {
+export const CategoryIcon: React.FC<CategoryIconProps> = React.memo(({ name = "Tag", ...props }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const LucideIcon = (Icons as any)[name] || Icons.Tag;
   return <LucideIcon {...props} />;
-};
+});
 
 export const AVAILABLE_ICONS = [
   "ShoppingCart",

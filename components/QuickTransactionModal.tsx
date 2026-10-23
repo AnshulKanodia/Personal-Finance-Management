@@ -6,6 +6,7 @@ import { CategoryIcon } from "./CategoryIcon";
 import { BudgetImpactPreview } from "./BudgetImpactPreview";
 import { clearCache } from "@/lib/clientCache";
 import { predictCategoryFromNote } from "@/lib/merchantPredictor";
+import { enqueueOfflineRequest } from "@/lib/offlineQueue";
 
 interface Category {
   _id: string;
@@ -133,19 +134,43 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
       return;
     }
 
+    const payload = {
+      amount: numericAmount,
+      type,
+      paymentMode,
+      category: categoryId,
+      notes,
+      date,
+    };
+
     try {
       setLoading(true);
+
+      // 1. If currently offline, enqueue immediately to IndexedDB
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        await enqueueOfflineRequest("/api/transactions", "POST", payload);
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
+        window.dispatchEvent(
+          new CustomEvent("rupeepulse_toast", {
+            detail: {
+              type: "info",
+              message: "Saved offline! Will auto-sync when connection restores. ⚡",
+            },
+          })
+        );
+        setAmount("");
+        setNotes("");
+        onSuccess();
+        onClose();
+        return;
+      }
+
+      // 2. If online, attempt live fetch
       const res = await fetch("/api/transactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: numericAmount,
-          type,
-          paymentMode,
-          category: categoryId,
-          notes,
-          date,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -162,7 +187,18 @@ export const QuickTransactionModal: React.FC<QuickTransactionModalProps> = ({
       onSuccess();
       onClose();
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      // 3. If network dropped mid-flight, catch network error and safely enqueue offline
+      try {
+        await enqueueOfflineRequest("/api/transactions", "POST", payload);
+        clearCache();
+        window.dispatchEvent(new CustomEvent("finance_data_updated"));
+        setAmount("");
+        setNotes("");
+        onSuccess();
+        onClose();
+      } catch (queueErr) {
+        setError(err.message || "An error occurred");
+      }
     } finally {
       setLoading(false);
     }
