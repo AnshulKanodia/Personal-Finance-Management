@@ -14,6 +14,18 @@
   "orientation": "portrait",
   "categories": ["finance", "productivity", "utilities"],
   "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "share_target": {
+    "action": "/?action=expense",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "related_applications": [
     {
@@ -24,7 +36,7 @@
   ],
   "scope_extensions": [
     {
-      "origin": "https://*.vercel.app"
+      "origin": "https://anshulpfm.vercel.app"
     }
   ],
   "file_handlers": [
