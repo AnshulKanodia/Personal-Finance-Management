@@ -1,12 +1,19 @@
 {
+  "id": "/?source=pwa",
   "name": "RupeePulse - Personal Finance",
   "short_name": "RupeePulse",
   "description": "Private Personal Finance Management PWA tailored for Indian Currency (INR)",
   "start_url": "/",
+  "scope": "/",
+  "lang": "en-IN",
+  "dir": "ltr",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
   "background_color": "#050508",
   "theme_color": "#050508",
   "orientation": "portrait",
+  "categories": ["finance", "productivity", "utilities"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
@@ -19,6 +26,22 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/icons/wallet-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "RupeePulse Mobile Dashboard"
+    },
+    {
+      "src": "/icons/wallet-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "RupeePulse Desktop Dashboard"
     }
   ],
   "shortcuts": [
