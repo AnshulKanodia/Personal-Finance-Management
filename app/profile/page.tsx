@@ -627,7 +627,7 @@ export default function ProfilePage() {
       {/* Version Number at Bottom */}
       <div className="pt-6 border-t border-zinc-850 flex flex-col items-center justify-center text-center text-xs text-zinc-500 gap-1 font-mono">
         <span className="font-bold text-zinc-300">RupeePulse PWA</span>
-        <span className="text-[11px] text-zinc-400">Version 1.4.0 (Build 2026.10)</span>
+        <span className="text-[11px] text-zinc-400">Version 1.5.0 (Build 2026.10.24)</span>
       </div>
 
       {/* Edit Profile Modal */}
