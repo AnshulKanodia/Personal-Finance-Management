@@ -14,6 +14,28 @@
   "orientation": "portrait",
   "categories": ["finance", "productivity", "utilities"],
   "prefer_related_applications": false,
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "com.rupeepulse.app",
+      "url": "https://play.google.com/store/apps/details?id=com.rupeepulse.app"
+    }
+  ],
+  "scope_extensions": [
+    {
+      "origin": "https://*.vercel.app"
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/profile?action=restore",
+      "name": "RupeePulse Vault Backup File",
+      "accept": {
+        "application/json": [".json"]
+      }
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192x192.png",
