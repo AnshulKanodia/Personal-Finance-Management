@@ -52,3 +52,9 @@ __pycache__/
 # Raw branding assets in root
 /Wallet Icon.png
 /Rupee Wallet .png
+
+# Native Android packages
+*.apk
+*.aab
+*.zip
+RupeePulse - Google Play package/
