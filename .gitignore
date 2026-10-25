@@ -58,3 +58,7 @@ __pycache__/
 *.aab
 *.zip
 RupeePulse - Google Play package/
+
+# Project documentation & reports
+/report/
+report/
