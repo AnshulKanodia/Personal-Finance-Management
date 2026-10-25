@@ -14,8 +14,9 @@ def get_base64_image(path):
 
 print("Encoding synthetic screenshot images...")
 cover_b64 = get_base64_image('report/cover.png')
-dash_b64 = get_base64_image('report/screenshots/dashboard_demo.png')
-khaata_b64 = get_base64_image('report/screenshots/khaata_demo.png')
+dash_b64 = get_base64_image('report/screenshots/actual_dashboard_mobile.png')
+dash_desk_b64 = get_base64_image('report/screenshots/actual_dashboard_desktop.png')
+khaata_b64 = get_base64_image('report/screenshots/actual_khaata_mobile.png')
 vault_b64 = get_base64_image('report/screenshots/vault_guard_demo.png')
 analytics_b64 = get_base64_image('report/screenshots/analytics_demo.png')
 
@@ -1188,27 +1189,25 @@ _Generated via RupeePulse Sovereign Finance_
     <h1 class="chapter-title">User Interface & Visual Showcase</h1>
   </div>
 
-  <h2>8.1 Mobile App User Experience & Core Screens (Synthetic Demo Data)</h2>
+  <h2>8.1 Actual Production Dashboard (Desktop & Web View)</h2>
   <p>
-    Below are actual production UI renderings of RupeePulse v1.5.0 executing within the native Android TWA environment, loaded with synthetic test records demonstrating zero-telemetry client execution:
+    Below is the authentic production Financial Overview interface of RupeePulse v1.5.0, exhibiting the 4 primary StatCards (Total Spend, Liquid Cash, To Take, To Give), real-time Spending Velocity, Vault Guard runway metrics, and recent transactions (rendered with synthetic demonstration values):
   </p>
 
+  <div class="figure-container">
+    <img src="REPLACE_DASH_DESK_B64" class="figure-img" alt="Actual Desktop Dashboard Screen">
+    <div class="figure-caption">Figure 8.1: RupeePulse Production Dashboard Interface (Desktop View)</div>
+  </div>
+
+  <h2>8.2 Actual Mobile Application Screens (Android TWA Container)</h2>
   <div class="screenshot-grid">
     <div class="screenshot-card">
-      <img src="REPLACE_DASH_B64" alt="Dashboard Screen">
-      <div class="screenshot-label">Figure 8.1: Executive Financial Dashboard & Live Overview</div>
+      <img src="REPLACE_DASH_B64" alt="Actual Mobile Dashboard Screen">
+      <div class="screenshot-label">Figure 8.2: Actual Mobile Dashboard Page</div>
     </div>
     <div class="screenshot-card">
-      <img src="REPLACE_KHAATA_B64" alt="Khaata Split Screen">
-      <div class="screenshot-label">Figure 8.2: Khaata Bilateral Split Ledger & UPI Settlement</div>
-    </div>
-    <div class="screenshot-card">
-      <img src="REPLACE_VAULT_B64" alt="Vault Guard Screen">
-      <div class="screenshot-label">Figure 8.3: Vault Guard Budget Runway & Daily Pacing</div>
-    </div>
-    <div class="screenshot-card">
-      <img src="REPLACE_ANALYTICS_B64" alt="Analytics Screen">
-      <div class="screenshot-label">Figure 8.4: Statistical Analytics & Entropy Diversification</div>
+      <img src="REPLACE_KHAATA_B64" alt="Actual Mobile Khaata Ledger Screen">
+      <div class="screenshot-label">Figure 8.3: Actual Mobile Khaata Ledger & NPCI UPI QR</div>
     </div>
   </div>
 
@@ -1293,6 +1292,7 @@ _Generated via RupeePulse Sovereign Finance_
 
 # Replace base64 tokens
 final_html = html_template.replace("REPLACE_COVER_B64", cover_b64)
+final_html = final_html.replace("REPLACE_DASH_DESK_B64", dash_desk_b64)
 final_html = final_html.replace("REPLACE_DASH_B64", dash_b64)
 final_html = final_html.replace("REPLACE_KHAATA_B64", khaata_b64)
 final_html = final_html.replace("REPLACE_VAULT_B64", vault_b64)
