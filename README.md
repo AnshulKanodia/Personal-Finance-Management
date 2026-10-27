@@ -12,7 +12,7 @@
 
 ---
 
-## 📌 Small Description
+## 📌 Description
 
 **RupeePulse** is a high-performance, private personal finance management ecosystem and Progressive Web App (PWA) architected specifically for the Indian currency system (INR).
 
